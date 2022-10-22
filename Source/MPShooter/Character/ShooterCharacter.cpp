@@ -6,10 +6,11 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "MPShooter/Weapons/Weapon.h"
 
 
-AShooterCharacter::AShooterCharacter()
-{
+AShooterCharacter::AShooterCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Setup spring arm from player to camera
@@ -26,17 +27,22 @@ AShooterCharacter::AShooterCharacter()
 
 	// Make character independent of camera rotation (for now)
 	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;	
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
 
 }
 
-void AShooterCharacter::BeginPlay()
-{
+void AShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(AShooterCharacter, OverlappingWeapon, COND_OwnerOnly);
+}
+
+void AShooterCharacter::BeginPlay() {
 	Super::BeginPlay();
-	
+
 }
 
 void AShooterCharacter::Tick(float DeltaTime) {
@@ -57,6 +63,7 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis("LookUp", this, &ThisClass::LookUp);
 
 }
+
 
 void AShooterCharacter::MoveForward(float Value) {
 	if (Controller != nullptr && Value != 0.f) {
@@ -83,6 +90,30 @@ void AShooterCharacter::Turn(float Value) {
 void AShooterCharacter::LookUp(float Value) {
 	AddControllerPitchInput(Value);
 }
+
+void AShooterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {	
+	if (OverlappingWeapon) {
+		OverlappingWeapon->ShowPickupWidget(false);
+	}
+	
+	OverlappingWeapon = Weapon;
+
+	// True if called on character being controlled by host
+	if (IsLocallyControlled() && OverlappingWeapon) {
+		OverlappingWeapon->ShowPickupWidget(true);		
+	}
+}
+
+void AShooterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) {
+	if (OverlappingWeapon) {
+		OverlappingWeapon->ShowPickupWidget(true);
+	}
+	if (LastWeapon) {
+		LastWeapon->ShowPickupWidget(false);
+	}
+}
+
+
 
 
 
