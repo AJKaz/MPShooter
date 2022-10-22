@@ -8,6 +8,7 @@
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "MPShooter/Weapons/Weapon.h"
+#include "MPShooter/ShooterComponents/CombatComponent.h"
 
 
 AShooterCharacter::AShooterCharacter() {
@@ -17,7 +18,7 @@ AShooterCharacter::AShooterCharacter() {
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetMesh());
 	// Controls distance camera is from player:
-	CameraBoom->TargetArmLength = 600.f;
+	CameraBoom->TargetArmLength = 550.f;
 	CameraBoom->bUsePawnControlRotation = true;
 
 	// Attach Camera to camera arm (CameraBoom)
@@ -31,6 +32,9 @@ AShooterCharacter::AShooterCharacter() {
 
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
+
+	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
+	Combat->SetIsReplicated(true);
 
 }
 
@@ -62,8 +66,15 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis("Turn", this, &ThisClass::Turn);
 	PlayerInputComponent->BindAxis("LookUp", this, &ThisClass::LookUp);
 
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ThisClass::InteractButtonPressed);
 }
 
+void AShooterCharacter::PostInitializeComponents() {
+	Super::PostInitializeComponents();
+	if (Combat) {
+		Combat->Character = this;
+	}
+}
 
 void AShooterCharacter::MoveForward(float Value) {
 	if (Controller != nullptr && Value != 0.f) {
@@ -89,6 +100,23 @@ void AShooterCharacter::Turn(float Value) {
 
 void AShooterCharacter::LookUp(float Value) {
 	AddControllerPitchInput(Value);
+}
+
+void AShooterCharacter::InteractButtonPressed() {
+	if (Combat) {
+		if (HasAuthority()) {
+			Combat->EquipWeapon(OverlappingWeapon);
+		}
+		else {
+			ServerInteractButtonPressed();
+		}
+	}
+}
+
+void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
+	if (Combat) {
+		Combat->EquipWeapon(OverlappingWeapon);
+	}
 }
 
 void AShooterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {	
