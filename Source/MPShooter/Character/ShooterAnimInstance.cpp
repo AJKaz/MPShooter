@@ -28,4 +28,6 @@ void UShooterAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 
 	// Set accelerating to true IF character's acceleration is greater than 0, false otherwise
 	bIsAccelerating = ShooterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f ? true : false;
+	bWeaponEquipped = ShooterCharacter->IsWeaponEquipped();
+	bIsCrouched = ShooterCharacter->bIsCrouched;
 }

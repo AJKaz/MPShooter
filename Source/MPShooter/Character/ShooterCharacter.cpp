@@ -36,6 +36,8 @@ AShooterCharacter::AShooterCharacter() {
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
 
+	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+
 }
 
 void AShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -67,6 +69,8 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAxis("LookUp", this, &ThisClass::LookUp);
 
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ThisClass::InteractButtonPressed);
+
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ThisClass::CrouchButtonPressed);
 }
 
 void AShooterCharacter::PostInitializeComponents() {
@@ -113,6 +117,15 @@ void AShooterCharacter::InteractButtonPressed() {
 	}
 }
 
+void AShooterCharacter::CrouchButtonPressed() {
+	if (bIsCrouched) {
+		UnCrouch();
+	}
+	else {
+		Crouch();
+	}		
+}
+
 void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
 	if (Combat) {
 		Combat->EquipWeapon(OverlappingWeapon);
@@ -130,6 +143,10 @@ void AShooterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {
 	if (IsLocallyControlled() && OverlappingWeapon) {
 		OverlappingWeapon->ShowPickupWidget(true);		
 	}
+}
+
+bool AShooterCharacter::IsWeaponEquipped() {
+	return (Combat && Combat->EquippedWeapon);
 }
 
 void AShooterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) {
