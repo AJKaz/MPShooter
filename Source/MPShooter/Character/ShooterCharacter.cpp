@@ -30,6 +30,9 @@ AShooterCharacter::AShooterCharacter() {
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
+	// Let character move whilst in air (set to 1.f for 100% movement):
+	GetCharacterMovement()->AirControl = 0.75f;
+
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
 
@@ -71,6 +74,9 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ThisClass::InteractButtonPressed);
 
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ThisClass::CrouchButtonPressed);
+
+	PlayerInputComponent->BindAction("ADS", IE_Pressed, this, &ThisClass::ADSButtonPressed);
+	PlayerInputComponent->BindAction("ADS", IE_Released, this, &ThisClass::ADSButtonReleased);
 }
 
 void AShooterCharacter::PostInitializeComponents() {
@@ -126,6 +132,18 @@ void AShooterCharacter::CrouchButtonPressed() {
 	}		
 }
 
+void AShooterCharacter::ADSButtonPressed() {
+	if (Combat) {
+		Combat->SetAiming(true);
+	}
+}
+
+void AShooterCharacter::ADSButtonReleased() {
+	if (Combat) {
+		Combat->SetAiming(false);
+	}
+}
+
 void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
 	if (Combat) {
 		Combat->EquipWeapon(OverlappingWeapon);
@@ -147,6 +165,10 @@ void AShooterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {
 
 bool AShooterCharacter::IsWeaponEquipped() {
 	return (Combat && Combat->EquippedWeapon);
+}
+
+bool AShooterCharacter::IsAiming() {
+	return (Combat && Combat->bAiming);
 }
 
 void AShooterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) {
