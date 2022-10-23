@@ -9,6 +9,7 @@
 #include "Net/UnrealNetwork.h"
 #include "MPShooter/Weapons/Weapon.h"
 #include "MPShooter/ShooterComponents/CombatComponent.h"
+#include "Components/CapsuleComponent.h"
 
 
 AShooterCharacter::AShooterCharacter() {
@@ -25,6 +26,10 @@ AShooterCharacter::AShooterCharacter() {
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	// Set camera to ignore collision with players
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
 	// Make character independent of camera rotation (for now)
 	bUseControllerRotationYaw = false;

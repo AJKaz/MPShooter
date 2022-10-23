@@ -42,6 +42,9 @@ private:
 	UPROPERTY(Replicated)
 	bool bAiming;
 
+	float BaseWalkSpeed;
+	float AimWalkSpeed;
+
 public:	
 
 		
