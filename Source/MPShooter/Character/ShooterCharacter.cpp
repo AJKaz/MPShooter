@@ -18,7 +18,7 @@ AShooterCharacter::AShooterCharacter() {
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetMesh());
 	// Controls distance camera is from player:
-	CameraBoom->TargetArmLength = 550.f;
+	CameraBoom->TargetArmLength = 625.f;
 	CameraBoom->bUsePawnControlRotation = true;
 
 	// Attach Camera to camera arm (CameraBoom)
@@ -28,10 +28,7 @@ AShooterCharacter::AShooterCharacter() {
 
 	// Make character independent of camera rotation (for now)
 	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-
-	// Let character move whilst in air (set to 1.f for 100% movement):
-	GetCharacterMovement()->AirControl = 0.75f;
+	GetCharacterMovement()->bOrientRotationToMovement = true;	
 
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
@@ -40,6 +37,11 @@ AShooterCharacter::AShooterCharacter() {
 	Combat->SetIsReplicated(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+
+	// Jumping Variables:	
+	GetCharacterMovement()->AirControl = 0.88f;		// set to 1.0 for full in air control
+	GetCharacterMovement()->JumpZVelocity = 1650.f;
+	GetCharacterMovement()->GravityScale = 3.3f;
 
 }
 
