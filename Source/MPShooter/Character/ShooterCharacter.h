@@ -29,8 +29,10 @@ protected:
 	void LookUp(float Value);
 	void InteractButtonPressed();
 	void CrouchButtonPressed();
+	void CrouchButtonReleased();
 	void ADSButtonPressed();
 	void ADSButtonReleased();
+	virtual void Jump() override;
 
 	void AimOffset(float DeltaTime);
 

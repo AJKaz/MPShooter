@@ -48,6 +48,7 @@ AShooterCharacter::AShooterCharacter() {
 	GetCharacterMovement()->AirControl = 0.88f;		// set to 1.0 for full in air control
 	GetCharacterMovement()->JumpZVelocity = 1650.f;
 	GetCharacterMovement()->GravityScale = 3.3f;
+	GetCharacterMovement()->RotationRate.Yaw = 850.f;
 
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	NetUpdateFrequency = 66.f;
@@ -75,7 +76,7 @@ void AShooterCharacter::Tick(float DeltaTime) {
 void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ThisClass::Jump);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ThisClass::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ThisClass::MoveRight);
@@ -86,6 +87,7 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ThisClass::InteractButtonPressed);
 
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ThisClass::CrouchButtonPressed);
+	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ThisClass::CrouchButtonReleased);
 
 	PlayerInputComponent->BindAction("ADS", IE_Pressed, this, &ThisClass::ADSButtonPressed);
 	PlayerInputComponent->BindAction("ADS", IE_Released, this, &ThisClass::ADSButtonReleased);
@@ -136,12 +138,11 @@ void AShooterCharacter::InteractButtonPressed() {
 }
 
 void AShooterCharacter::CrouchButtonPressed() {
-	if (bIsCrouched) {
-		UnCrouch();
-	}
-	else {
-		Crouch();
-	}		
+	Crouch();		
+}
+
+void AShooterCharacter::CrouchButtonReleased() {
+	UnCrouch();
 }
 
 void AShooterCharacter::ADSButtonPressed() {
@@ -154,6 +155,10 @@ void AShooterCharacter::ADSButtonReleased() {
 	if (Combat) {
 		Combat->SetAiming(false);
 	}
+}
+
+void AShooterCharacter::Jump() {	
+	Super::Jump();
 }
 
 void AShooterCharacter::AimOffset(float DeltaTime) {
