@@ -10,6 +10,7 @@
 #include "MPShooter/Weapons/Weapon.h"
 #include "MPShooter/ShooterComponents/CombatComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 AShooterCharacter::AShooterCharacter() {
@@ -48,6 +49,10 @@ AShooterCharacter::AShooterCharacter() {
 	GetCharacterMovement()->JumpZVelocity = 1650.f;
 	GetCharacterMovement()->GravityScale = 3.3f;
 
+	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+	NetUpdateFrequency = 66.f;
+	MinNetUpdateFrequency = 33.f;
+
 }
 
 void AShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -63,7 +68,7 @@ void AShooterCharacter::BeginPlay() {
 
 void AShooterCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
-
+	AimOffset(DeltaTime);
 }
 
 
@@ -151,6 +156,60 @@ void AShooterCharacter::ADSButtonReleased() {
 	}
 }
 
+void AShooterCharacter::AimOffset(float DeltaTime) {
+	if (Combat && Combat->EquippedWeapon == nullptr) return;
+
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	float Speed = Velocity.Size();
+	bool bIsInAir = GetCharacterMovement()->IsFalling();
+
+	// if standing still and not jumping
+	if (Speed == 0.f && !bIsInAir) {
+		FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
+		AO_Yaw = DeltaAimRotation.Yaw;
+		if (TurningInPlace == ETurningInPlace::ETIP_NotTurning) {
+			InterpAO_Yaw = AO_Yaw;
+		}
+		bUseControllerRotationYaw = true;
+		TurnInPlace(DeltaTime);
+	}
+	// If running or jumping:
+	if (Speed > 0.f || bIsInAir) {
+		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		AO_Yaw = 0.f;
+		bUseControllerRotationYaw = true;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+	}
+
+	AO_Pitch = GetBaseAimRotation().Pitch;
+	if (AO_Pitch > 90.f && !IsLocallyControlled()) {
+		// Map pitch from range [270, 360) to [-90, 0)
+		FVector2D InRange(270.f, 360.f);
+		FVector2D OutRange(-90.f, 0.f);
+		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
+	}
+}
+
+void AShooterCharacter::TurnInPlace(float DeltaTime) {	
+	if (AO_Yaw > 90.f) {
+		TurningInPlace = ETurningInPlace::ETIP_Right;
+	}
+	else if (AO_Yaw < -90.f) {
+		TurningInPlace = ETurningInPlace::ETIP_Left;
+	}
+	// If we are turning
+	if (TurningInPlace != ETurningInPlace::ETIP_NotTurning) {
+		InterpAO_Yaw = FMath::FInterpTo(InterpAO_Yaw, 0.f, DeltaTime, 5.f);
+		AO_Yaw = InterpAO_Yaw;
+		if (FMath::Abs(AO_Yaw) < 15.f) {
+			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+			StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+		}
+	}
+}
+
 void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
 	if (Combat) {
 		Combat->EquipWeapon(OverlappingWeapon);
@@ -176,6 +235,11 @@ bool AShooterCharacter::IsWeaponEquipped() {
 
 bool AShooterCharacter::IsAiming() {
 	return (Combat && Combat->bAiming);
+}
+
+AWeapon* AShooterCharacter::GetEquippedWeapon() {
+	if (Combat == nullptr) return nullptr;
+	return Combat->EquippedWeapon;
 }
 
 void AShooterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) {
