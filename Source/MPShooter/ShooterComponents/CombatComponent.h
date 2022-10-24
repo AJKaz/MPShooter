@@ -32,6 +32,9 @@ protected:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
+
+	void FireButtonPressed(bool bPressed);
+
 private:
 
 	class AShooterCharacter* Character;
@@ -44,6 +47,8 @@ private:
 
 	float BaseWalkSpeed;
 	float AimWalkSpeed;
+
+	bool bFireButtonPressed;
 
 public:	
 

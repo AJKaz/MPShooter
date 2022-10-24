@@ -11,6 +11,7 @@
 #include "MPShooter/ShooterComponents/CombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "ShooterAnimInstance.h"
 
 
 AShooterCharacter::AShooterCharacter() {
@@ -91,12 +92,26 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 	PlayerInputComponent->BindAction("ADS", IE_Pressed, this, &ThisClass::ADSButtonPressed);
 	PlayerInputComponent->BindAction("ADS", IE_Released, this, &ThisClass::ADSButtonReleased);
+
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ThisClass::FireButtonPressed);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ThisClass::FireButtonReleased);
 }
 
 void AShooterCharacter::PostInitializeComponents() {
 	Super::PostInitializeComponents();
 	if (Combat) {
 		Combat->Character = this;
+	}
+}
+
+void AShooterCharacter::PlayFireMontage(bool bAiming) {
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+	
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && FireWeaponMontage) {
+		AnimInstance->Montage_Play(FireWeaponMontage);
+		FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
+		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
 
@@ -159,6 +174,18 @@ void AShooterCharacter::ADSButtonReleased() {
 
 void AShooterCharacter::Jump() {	
 	Super::Jump();
+}
+
+void AShooterCharacter::FireButtonPressed() {
+	if (Combat) {
+		Combat->FireButtonPressed(true);
+	}
+}
+
+void AShooterCharacter::FireButtonReleased() {
+	if (Combat) {
+		Combat->FireButtonPressed(false);
+	}
 }
 
 void AShooterCharacter::AimOffset(float DeltaTime) {

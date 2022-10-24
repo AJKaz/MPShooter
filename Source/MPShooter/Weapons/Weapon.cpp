@@ -4,8 +4,10 @@
 #include "Weapon.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "MPShooter/Character/ShooterCharacter.h"
 #include "Net/UnrealNetwork.h"
+#include "Animation/AnimationAsset.h"
 
 
 AWeapon::AWeapon() {
@@ -92,6 +94,13 @@ void AWeapon::SetWeaponState(EWeaponState State) {
 void AWeapon::ShowPickupWidget(bool bShowWidget) {
 	if (PickupWidget) {
 		PickupWidget->SetVisibility(bShowWidget);
+	}
+}
+
+void AWeapon::Fire() {
+	if (FireAnimation) {
+		// Play fire animation
+		WeaponMesh->PlayAnimation(FireAnimation, false);
 	}
 }
 
