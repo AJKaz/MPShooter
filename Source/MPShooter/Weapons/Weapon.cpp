@@ -97,7 +97,7 @@ void AWeapon::ShowPickupWidget(bool bShowWidget) {
 	}
 }
 
-void AWeapon::Fire() {
+void AWeapon::Fire(const FVector& HitTarget) {
 	if (FireAnimation) {
 		// Play fire animation
 		WeaponMesh->PlayAnimation(FireAnimation, false);

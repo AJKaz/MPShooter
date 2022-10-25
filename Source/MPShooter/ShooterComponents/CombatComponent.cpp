@@ -8,9 +8,11 @@
 #include "Components/SphereComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
 
 UCombatComponent::UCombatComponent() {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 
 	BaseWalkSpeed = 1000.f;
 	AimWalkSpeed = 700.f;
@@ -28,6 +30,8 @@ void UCombatComponent::BeginPlay() {
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	FHitResult HitResult;
+	TraceUnderCrosshairs(HitResult);
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -66,6 +70,7 @@ void UCombatComponent::FireButtonPressed(bool bPressed) {
 	if (bFireButtonPressed) { ServerFire(); }	
 }
 
+
 void UCombatComponent::ServerFire_Implementation() {
 	MulticastFire();
 }
@@ -75,8 +80,56 @@ void UCombatComponent::MulticastFire_Implementation() {
 
 	if (Character) {
 		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->Fire();
+		EquippedWeapon->Fire(HitTarget);
 	}
+}
+
+void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult) {
+	FVector2D ViewportSize;
+	if (GEngine && GEngine->GameViewport) {
+		GEngine->GameViewport->GetViewportSize(ViewportSize);
+	}
+	// Sets crosshair location to center of screen:
+	FVector2D CrosshairLocation(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
+	FVector CrosshairWorldPosition;
+	FVector CrosshairWorldDirection;
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrosshairLocation,
+		CrosshairWorldPosition,
+		CrosshairWorldDirection
+	);
+	if (bScreenToWorld) {
+		// Successfully got WORLD coords of screen center, perform line trace now
+		FVector Start = CrosshairWorldPosition;
+		FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
+		GetWorld()->LineTraceSingleByChannel(
+			TraceHitResult,
+			Start,
+			End,
+			ECollisionChannel::ECC_Visibility
+		);
+
+		// Didn't hit anything, aiming in sky maybe
+		if (!TraceHitResult.bBlockingHit) {
+			TraceHitResult.ImpactPoint = End;
+			HitTarget = End;
+		}
+		else {
+			HitTarget = TraceHitResult.ImpactPoint;
+
+			// Draw debug sphere:
+			DrawDebugSphere(
+				GetWorld(),
+				TraceHitResult.ImpactPoint,
+				12.f,
+				12,
+				FColor::Red
+			);
+		}
+
+	}
+
 }
 
 void UCombatComponent::SetAiming(bool bIsAiming) {
