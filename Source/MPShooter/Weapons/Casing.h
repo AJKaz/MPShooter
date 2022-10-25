@@ -4,19 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Projectile.generated.h"
+#include "Casing.generated.h"
 
 UCLASS()
-class MPSHOOTER_API AProjectile : public AActor
+class MPSHOOTER_API ACasing : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	AProjectile();	
-	virtual void Tick(float DeltaTime) override;
-	virtual void Destroyed() override;
+
+	ACasing();
 
 protected:
+
 	virtual void BeginPlay() override;
 
 	UFUNCTION()
@@ -24,24 +24,12 @@ protected:
 
 private:
 
-	UPROPERTY(EditAnywhere)
-	class UBoxComponent* CollisionBox;
-
 	UPROPERTY(VisibleAnywhere)
-	class UProjectileMovementComponent* ProjectileMovementComponent;
+	class UStaticMeshComponent* CasingMesh;
 
 	UPROPERTY(EditAnywhere)
-	class UParticleSystem* Tracer;
-
-	class UParticleSystemComponent* TracerComponent;
+	float CasingEjectionImpulse;
 
 	UPROPERTY(EditAnywhere)
-	UParticleSystem* ImpactParticles;
-
-	UPROPERTY(EditAnywhere)
-	class USoundCue* ImpactSound;
-
-public:	
-	
-
+	class USoundCue* CasingSound;
 };
