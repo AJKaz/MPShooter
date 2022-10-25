@@ -16,6 +16,7 @@ UCombatComponent::UCombatComponent() {
 
 	BaseWalkSpeed = 1000.f;
 	AimWalkSpeed = 700.f;
+	SetIsReplicatedByDefault(true);
 }
 
 
@@ -30,8 +31,6 @@ void UCombatComponent::BeginPlay() {
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	FHitResult HitResult;
-	TraceUnderCrosshairs(HitResult);
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -67,20 +66,24 @@ void UCombatComponent::OnRep_EquippedWeapon() {
 
 void UCombatComponent::FireButtonPressed(bool bPressed) {
 	bFireButtonPressed = bPressed;	
-	if (bFireButtonPressed) { ServerFire(); }	
+	if (bFireButtonPressed) { 
+		FHitResult HitResult;
+		TraceUnderCrosshairs(HitResult);
+		ServerFire(HitResult.ImpactPoint); 
+	}	
 }
 
 
-void UCombatComponent::ServerFire_Implementation() {
-	MulticastFire();
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget) {
+	MulticastFire(TraceHitTarget);
 }
 
-void UCombatComponent::MulticastFire_Implementation() {
+void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget) {
 	if (EquippedWeapon == nullptr) return;
 
 	if (Character) {
 		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->Fire(HitTarget);
+		EquippedWeapon->Fire(TraceHitTarget);
 	}
 }
 
@@ -108,26 +111,7 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult) {
 			Start,
 			End,
 			ECollisionChannel::ECC_Visibility
-		);
-
-		// Didn't hit anything, aiming in sky maybe
-		if (!TraceHitResult.bBlockingHit) {
-			TraceHitResult.ImpactPoint = End;
-			HitTarget = End;
-		}
-		else {
-			HitTarget = TraceHitResult.ImpactPoint;
-
-			// Draw debug sphere:
-			DrawDebugSphere(
-				GetWorld(),
-				TraceHitResult.ImpactPoint,
-				12.f,
-				12,
-				FColor::Red
-			);
-		}
-
+		);		
 	}
 
 }
