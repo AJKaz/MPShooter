@@ -70,19 +70,17 @@ void UShooterAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 			/*RightHandRotation = UKismetMathLibrary::FindLookAtRotation(
 				RightHandTransform.GetLocation(),
 				RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTarget()));*/
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(
-				RightHandTransform.GetLocation(),
-				RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTarget()));
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(FVector3d(), (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTarget()));
 		}
 		
 
-		
+		/*
 		// Debug: Show direction weapon is aiming
 		FTransform MuzzleTipTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("MuzzleFlash"), ERelativeTransformSpace::RTS_World);
 		FVector MuzzleX(FRotationMatrix(MuzzleTipTransform.GetRotation().Rotator()).GetUnitAxis(EAxis::X));	
 		DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), MuzzleTipTransform.GetLocation() + MuzzleX * 1000.f, FColor::Red);
 		DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), ShooterCharacter->GetHitTarget(), FColor::Orange);
-		
+		*/
 	}
 
 
