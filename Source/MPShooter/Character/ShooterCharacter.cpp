@@ -283,7 +283,10 @@ void AShooterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon) {
 	}
 }
 
-
+FVector AShooterCharacter::GetHitTarget() const {
+	if (Combat == nullptr) return FVector();
+	return Combat->HitTarget;
+}
 
 
 

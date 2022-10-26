@@ -10,6 +10,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "MPShooter/PlayerController/ShooterPlayerController.h"
+#include "MPShooter/HUD/ShooterHUD.h"
 
 UCombatComponent::UCombatComponent() {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -23,14 +25,69 @@ UCombatComponent::UCombatComponent() {
 
 void UCombatComponent::BeginPlay() {
 	Super::BeginPlay();
-	if (Character) {
-		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
-	}
+	if (Character) Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed; 
 }
 
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	SetHUDCrosshairs(DeltaTime);
+
+	if (Character && Character->IsLocallyControlled()) {
+		FHitResult HitResult;
+		TraceUnderCrosshairs(HitResult);
+		HitTarget = HitResult.ImpactPoint;
+	}
+	
+}
+
+void UCombatComponent::SetHUDCrosshairs(float DeltaTime) {
+	if (Character == nullptr || Character->Controller == nullptr) return;
+
+	// If controller is null, set it to player's controller
+	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
+	if (Controller) {
+		// If HUD is null, set it to controller's HUD
+		HUD = HUD == nullptr ? Cast<AShooterHUD>(Controller->GetHUD()) : HUD;
+		if (HUD) {
+			// Sets HUD crosshair texture from weapon crosshairs texture
+			FHUDPackage HUDPackage;
+			if (EquippedWeapon) {
+				HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
+				HUDPackage.CrosshairsLeft = EquippedWeapon->CrosshairsLeft;
+				HUDPackage.CrosshairsRight = EquippedWeapon->CrosshairsRight;
+				HUDPackage.CrosshairsBottom = EquippedWeapon->CrosshairsBottom;
+				HUDPackage.CrosshairsTop = EquippedWeapon->CrosshairsTop;				
+			}
+			else {
+				HUDPackage.CrosshairsCenter = nullptr;
+				HUDPackage.CrosshairsLeft = nullptr;
+				HUDPackage.CrosshairsRight = nullptr;
+				HUDPackage.CrosshairsBottom = nullptr;
+				HUDPackage.CrosshairsTop = nullptr;
+			}
+			// Calculate Crosshair Spread for movement error:
+			// Map [0, maxSpeed] -> [0,1]
+			FVector2D WalkSpeedRange(0.f, Character->GetCharacterMovement()->MaxWalkSpeed);
+			FVector2D VelocityMultiplayerRange(0.f, 1.f);
+			FVector Velocity = Character->GetVelocity();
+			Velocity.Z = 0.f;
+			CrosshairsVelocityFactor = FMath::GetMappedRangeValueClamped(WalkSpeedRange, VelocityMultiplayerRange, Velocity.Size());
+
+			// Make jumping error slowly expand crosshair:
+			if (Character->GetCharacterMovement()->IsFalling()) {				
+				CrosshairsInAirFactor = FMath::FInterpTo(CrosshairsInAirFactor, 2.f, DeltaTime, 2.f);
+			}
+			else {
+				CrosshairsInAirFactor = FMath::FInterpTo(CrosshairsInAirFactor, 0.f, DeltaTime, 30.f);
+			}
+
+			HUDPackage.CrosshairSpread = CrosshairsVelocityFactor + CrosshairsInAirFactor;
+			
+			HUD->SetHUDPackage(HUDPackage);
+		}
+	}
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -111,9 +168,9 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult) {
 			Start,
 			End,
 			ECollisionChannel::ECC_Visibility
-		);		
+		);	
+		if (!TraceHitResult.bBlockingHit) TraceHitResult.ImpactPoint = End;
 	}
-
 }
 
 void UCombatComponent::SetAiming(bool bIsAiming) {

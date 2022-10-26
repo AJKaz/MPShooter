@@ -61,6 +61,28 @@ void UShooterAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 		ShooterCharacter->GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
+
+		// Rotate right hand socket to aim weapon towards where crosshair is pointed
+		if (ShooterCharacter->IsLocallyControlled()) {
+			// Get right hand location:
+			bLocallyControlled = true;
+			FTransform RightHandTransform = ShooterCharacter->GetMesh()->GetSocketTransform(FName("Hand_R"), ERelativeTransformSpace::RTS_World);
+			/*RightHandRotation = UKismetMathLibrary::FindLookAtRotation(
+				RightHandTransform.GetLocation(),
+				RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTarget()));*/
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(
+				RightHandTransform.GetLocation(),
+				RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTarget()));
+		}
+		
+
+		
+		// Debug: Show direction weapon is aiming
+		FTransform MuzzleTipTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("MuzzleFlash"), ERelativeTransformSpace::RTS_World);
+		FVector MuzzleX(FRotationMatrix(MuzzleTipTransform.GetRotation().Rotator()).GetUnitAxis(EAxis::X));	
+		DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), MuzzleTipTransform.GetLocation() + MuzzleX * 1000.f, FColor::Red);
+		DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), ShooterCharacter->GetHitTarget(), FColor::Orange);
+		
 	}
 
 
