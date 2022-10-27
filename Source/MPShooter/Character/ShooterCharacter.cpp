@@ -12,6 +12,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "ShooterAnimInstance.h"
+#include "MPShooter/MPShooter.h"
 
 
 AShooterCharacter::AShooterCharacter() {
@@ -31,9 +32,10 @@ AShooterCharacter::AShooterCharacter() {
 
 	// Set camera to ignore collision with players
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);	
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
-
+	
 	// Make character independent of camera rotation (for now)
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;	
@@ -116,6 +118,21 @@ void AShooterCharacter::PlayFireMontage(bool bAiming) {
 		FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
+}
+
+void AShooterCharacter::PlayHitReactMontage() {
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HitReactMontage) {
+		AnimInstance->Montage_Play(HitReactMontage);
+		FName SectionName("FromFront");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void AShooterCharacter::MulticastHit_Implementation() {
+	PlayHitReactMontage();
 }
 
 void AShooterCharacter::MoveForward(float Value) {
