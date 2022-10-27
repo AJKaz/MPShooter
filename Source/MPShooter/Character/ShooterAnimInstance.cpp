@@ -70,7 +70,8 @@ void UShooterAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 			/*RightHandRotation = UKismetMathLibrary::FindLookAtRotation(
 				RightHandTransform.GetLocation(),
 				RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTarget()));*/
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(FVector3d(), (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTarget()));
+			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(FVector3d(), (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTarget()));
+			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 30.f);
 		}
 		
 

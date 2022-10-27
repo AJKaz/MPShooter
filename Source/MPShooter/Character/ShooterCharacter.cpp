@@ -31,7 +31,8 @@ AShooterCharacter::AShooterCharacter() {
 
 	// Set camera to ignore collision with players
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);	
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 
 	// Make character independent of camera rotation (for now)
 	bUseControllerRotationYaw = false;
@@ -71,6 +72,8 @@ void AShooterCharacter::BeginPlay() {
 void AShooterCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 	AimOffset(DeltaTime);
+	HideCameraIfCharacterClose();
+
 }
 
 
@@ -288,6 +291,22 @@ FVector AShooterCharacter::GetHitTarget() const {
 	return Combat->HitTarget;
 }
 
+void AShooterCharacter::HideCameraIfCharacterClose() {
+	if (!IsLocallyControlled()) return;
 
+	// If camera is squished up against player, hide character and weapon
+	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold) {
+		GetMesh()->SetVisibility(false);
+		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh()) {
+			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
+	}
+	else {
+		GetMesh()->SetVisibility(true);
+		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh()) {
+			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+		}
+	}
+}
 
 
