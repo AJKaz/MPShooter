@@ -13,6 +13,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "ShooterAnimInstance.h"
 #include "MPShooter/MPShooter.h"
+#include "MPShooter/PlayerController/ShooterPlayerController.h"
 
 
 AShooterCharacter::AShooterCharacter() {
@@ -64,11 +65,16 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(AShooterCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(AShooterCharacter, Health);
 }
 
 void AShooterCharacter::BeginPlay() {
 	Super::BeginPlay();
 
+	UpdateHUDHealth();
+	if (HasAuthority()) {
+		OnTakeAnyDamage.AddDynamic(this, &AShooterCharacter::ReceiveDamage);
+	}
 }
 
 void AShooterCharacter::Tick(float DeltaTime) {
@@ -141,10 +147,6 @@ void AShooterCharacter::PlayHitReactMontage() {
 		FName SectionName("FromFront");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
-}
-
-void AShooterCharacter::MulticastHit_Implementation() {
-	PlayHitReactMontage();
 }
 
 void AShooterCharacter::MoveForward(float Value) {
@@ -295,6 +297,24 @@ void AShooterCharacter::SimProxiesTurn() {
 
 }
 
+void AShooterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser) {
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+	UpdateHUDHealth();
+	PlayHitReactMontage();
+}
+
+void AShooterCharacter::OnRep_Health() {
+	UpdateHUDHealth();
+	PlayHitReactMontage();
+}
+
+void AShooterCharacter::UpdateHUDHealth() {
+	ShooterPlayerController = ShooterPlayerController == nullptr ? Cast<AShooterPlayerController>(Controller) : ShooterPlayerController;
+	if (ShooterPlayerController) {
+		ShooterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
 void AShooterCharacter::OnRep_ReplicatedMovement() {
 	Super::OnRep_ReplicatedMovement();
 	SimProxiesTurn();
@@ -326,7 +346,7 @@ void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
 	}
 }
 
-void AShooterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {	
+void AShooterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {
 	if (OverlappingWeapon) {
 		OverlappingWeapon->ShowPickupWidget(false);
 	}
