@@ -73,7 +73,19 @@ void AShooterCharacter::BeginPlay() {
 
 void AShooterCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
-	AimOffset(DeltaTime);
+
+	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled()) {
+		AimOffset(DeltaTime);
+	}
+	else {
+		TimeSinceLastMovementReplication += DeltaTime;
+		// ensures that simulated proxy's rotation updates every 0.2 seconds
+		if (TimeSinceLastMovementReplication > 0.2f) {
+			OnRep_ReplicatedMovement();
+		}
+		CalculateAO_Pitch();
+	}
+
 	HideCameraIfCharacterClose();
 
 }
@@ -208,16 +220,21 @@ void AShooterCharacter::FireButtonReleased() {
 	}
 }
 
+float AShooterCharacter::CalculateSpeed() {
+	FVector Velocity = GetVelocity();
+	Velocity.Z = 0.f;
+	return Velocity.Size();	 
+}
+
 void AShooterCharacter::AimOffset(float DeltaTime) {
 	if (Combat && Combat->EquippedWeapon == nullptr) return;
 
-	FVector Velocity = GetVelocity();
-	Velocity.Z = 0.f;
-	float Speed = Velocity.Size();
+	float Speed = CalculateSpeed();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 
 	// if standing still and not jumping
 	if (Speed == 0.f && !bIsInAir) {
+		bRotateRootBone = true;
 		FRotator CurrentAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
 		AO_Yaw = DeltaAimRotation.Yaw;
@@ -229,12 +246,16 @@ void AShooterCharacter::AimOffset(float DeltaTime) {
 	}
 	// If running or jumping:
 	if (Speed > 0.f || bIsInAir) {
+		bRotateRootBone = false;
 		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = 0.f;
 		bUseControllerRotationYaw = true;
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
+	CalculateAO_Pitch();
+}
 
+void AShooterCharacter::CalculateAO_Pitch() {
 	AO_Pitch = GetBaseAimRotation().Pitch;
 	if (AO_Pitch > 90.f && !IsLocallyControlled()) {
 		// Map pitch from range [270, 360) to [-90, 0)
@@ -244,11 +265,48 @@ void AShooterCharacter::AimOffset(float DeltaTime) {
 	}
 }
 
+void AShooterCharacter::SimProxiesTurn() {
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
+	
+	bRotateRootBone = false;
+	float Speed = CalculateSpeed();
+	if (Speed > 0.f) {
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
+
+	ProxyRotationLastFrame = ProxyRotation;
+	ProxyRotation = GetActorRotation();
+	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
+	// If simulated proxy has turned enough, show turning animation for other clients
+	if (FMath::Abs(ProxyYaw) > TurnThreshold) {
+		if (ProxyYaw > TurnThreshold) {
+			TurningInPlace = ETurningInPlace::ETIP_Right;
+		}
+		else if (ProxyYaw < -TurnThreshold) {
+			TurningInPlace = ETurningInPlace::ETIP_Left;
+		}
+		else {
+			TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		}
+		return;
+	}
+	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+
+}
+
+void AShooterCharacter::OnRep_ReplicatedMovement() {
+	Super::OnRep_ReplicatedMovement();
+	SimProxiesTurn();
+	TimeSinceLastMovementReplication = 0.f;
+
+}
+
 void AShooterCharacter::TurnInPlace(float DeltaTime) {	
-	if (AO_Yaw > 90.f) {
+	if (AO_Yaw > 55.f) {
 		TurningInPlace = ETurningInPlace::ETIP_Right;
 	}
-	else if (AO_Yaw < -90.f) {
+	else if (AO_Yaw < -55.f) {
 		TurningInPlace = ETurningInPlace::ETIP_Left;
 	}
 	// If we are turning
