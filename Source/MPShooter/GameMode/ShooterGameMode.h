@@ -17,5 +17,6 @@ class MPSHOOTER_API AShooterGameMode : public AGameMode
 public:
 
 	virtual void PlayerEliminated(class AShooterCharacter* ElimmedCharacter, class AShooterPlayerController* VictimController, AShooterPlayerController* AttackerController);
-
+	
+	virtual void RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController);
 };

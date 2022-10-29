@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "MPShooter/ShooterTypes/TurningInPlace.h"
 #include "MPShooter/Interfaces/InteractWithCrosshairsInterface.h"
+#include "Components/TimelineComponent.h"
 #include "ShooterCharacter.generated.h"
 
 UCLASS()
@@ -25,6 +26,8 @@ public:
 	void PlayElimMontage();
 	
 	UFUNCTION(NetMulticast, Reliable)
+	void MulticastElim();
+	/** Called only on server */
 	void Elim();
 
 protected:	
@@ -121,9 +124,43 @@ private:
 	class AShooterPlayerController* ShooterPlayerController;
 
 	UFUNCTION()
-	void OnRep_Health();
+	void OnRep_Health();	
 
+	/**
+	* Elimmed 
+	*/
 	bool bElimmed = false;
+
+	FTimerHandle ElimTimer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float ElimDelay = 3.f;
+	
+	void ElimTimerFinished();
+
+	/**
+	* Dissolve Effect
+	*/
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+
+	FOnTimelineFloat DissolveTrack;
+
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* DissolveCurve;
+
+	/* Dynamic instance that can be changed at runtime */
+	UPROPERTY(VisibleAnywhere, Category = Elim)
+	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+
+	/* Material instance set on Blueprint, used with dynamic material instance */
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* DissolveMaterialInstance;
+
+	void StartDissolve();
+
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
 
 public:		
 	void SetOverlappingWeapon(AWeapon* Weapon);

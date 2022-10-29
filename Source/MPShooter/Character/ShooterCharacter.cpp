@@ -15,9 +15,13 @@
 #include "MPShooter/MPShooter.h"
 #include "MPShooter/PlayerController/ShooterPlayerController.h"
 #include "MPShooter/GameMode/ShooterGameMode.h"
+#include "TimerManager.h"
 
 AShooterCharacter::AShooterCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
+
+	// Ensure character will always spawn after death (if gamemode allows for it)
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	// Setup spring arm from player to camera
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -58,6 +62,9 @@ AShooterCharacter::AShooterCharacter() {
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	NetUpdateFrequency = 66.f;
 	MinNetUpdateFrequency = 33.f;
+
+	// Dissolve Effect for Elimmed
+	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 
 }
 
@@ -304,6 +311,33 @@ void AShooterCharacter::SimProxiesTurn() {
 
 }
 
+void AShooterCharacter::Elim() {
+	MulticastElim();
+	GetWorldTimerManager().SetTimer(ElimTimer, this, &AShooterCharacter::ElimTimerFinished, ElimDelay);
+}
+
+void AShooterCharacter::MulticastElim_Implementation() {
+	bElimmed = true;
+	PlayElimMontage();
+
+	// Apply Character's Dissolve Effect
+	if (DissolveMaterialInstance) {
+		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, DynamicDissolveMaterialInstance);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), 0.55f);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
+	}
+	StartDissolve();
+}
+
+void AShooterCharacter::ElimTimerFinished() {
+	// Respawn Character after elim timer is finished
+	AShooterGameMode* ShooterGameMode = GetWorld()->GetAuthGameMode<AShooterGameMode>();
+	if (ShooterGameMode) {
+		ShooterGameMode->RequestRespawn(this, Controller);
+	}
+}
+
 void AShooterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser) {
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	UpdateHUDHealth();
@@ -360,6 +394,20 @@ void AShooterCharacter::TurnInPlace(float DeltaTime) {
 void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
 	if (Combat) {
 		Combat->EquipWeapon(OverlappingWeapon);
+	}
+}
+
+void AShooterCharacter::StartDissolve() {
+	DissolveTrack.BindDynamic(this, &AShooterCharacter::UpdateDissolveMaterial);
+	if (DissolveCurve && DissolveTimeline) {
+		DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
+		DissolveTimeline->Play();
+	}
+}
+
+void AShooterCharacter::UpdateDissolveMaterial(float DissolveValue) {
+	if (DynamicDissolveMaterialInstance) {
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), DissolveValue);
 	}
 }
 
@@ -421,7 +469,3 @@ void AShooterCharacter::HideCameraIfCharacterClose() {
 	}
 }
 
-void AShooterCharacter::Elim_Implementation() {
-	bElimmed = true;
-	PlayElimMontage();
-}
