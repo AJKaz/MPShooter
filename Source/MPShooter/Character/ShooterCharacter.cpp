@@ -14,7 +14,7 @@
 #include "ShooterAnimInstance.h"
 #include "MPShooter/MPShooter.h"
 #include "MPShooter/PlayerController/ShooterPlayerController.h"
-
+#include "MPShooter/GameMode/ShooterGameMode.h"
 
 AShooterCharacter::AShooterCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -135,6 +135,13 @@ void AShooterCharacter::PlayFireMontage(bool bAiming) {
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		FName SectionName = bAiming ? FName("RifleAim") : FName("RifleHip");
 		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void AShooterCharacter::PlayElimMontage() {
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ElimMontage) {
+		AnimInstance->Montage_Play(ElimMontage);		
 	}
 }
 
@@ -301,6 +308,16 @@ void AShooterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 	UpdateHUDHealth();
 	PlayHitReactMontage();
+
+	// If health is 0, call game mode's player eliminated
+	if (Health == 0.f) {
+		AShooterGameMode* ShooterGameMode = GetWorld()->GetAuthGameMode<AShooterGameMode>();
+		if (ShooterGameMode) {
+			ShooterPlayerController = ShooterPlayerController == nullptr ? Cast<AShooterPlayerController>(Controller) : ShooterPlayerController;
+			AShooterPlayerController* AttackerController = Cast<AShooterPlayerController>(InstigatorController);
+			ShooterGameMode->PlayerEliminated(this, ShooterPlayerController, AttackerController);
+		}
+	}
 }
 
 void AShooterCharacter::OnRep_Health() {
@@ -404,4 +421,7 @@ void AShooterCharacter::HideCameraIfCharacterClose() {
 	}
 }
 
-
+void AShooterCharacter::Elim_Implementation() {
+	bElimmed = true;
+	PlayElimMontage();
+}
