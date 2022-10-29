@@ -6,6 +6,7 @@
 #include "MPShooter/HUD/CharacterOverlay.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "MPShooter/Character/ShooterCharacter.h"
 
 
 void AShooterPlayerController::BeginPlay() {
@@ -22,5 +23,14 @@ void AShooterPlayerController::SetHUDHealth(float Health, float MaxHealth) {
 		// Round float health values up to int values and set text
 		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
 		ShooterHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
+	}
+}
+
+void AShooterPlayerController::OnPossess(APawn* InPawn) {
+	Super::OnPossess(InPawn);
+
+	AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(InPawn);
+	if (ShooterCharacter) {
+		SetHUDHealth(ShooterCharacter->GetHealth(), ShooterCharacter->GetMaxHealth());
 	}
 }
