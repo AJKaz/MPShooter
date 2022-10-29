@@ -411,6 +411,7 @@ void AShooterCharacter::PollInit() {
 		ShooterPlayerState = GetPlayerState<AShooterPlayerState>();
 		if (ShooterPlayerState) {
 			ShooterPlayerState->AddToScore(0.f);
+			ShooterPlayerState->AddToDeaths(0);
 		}
 	}
 }

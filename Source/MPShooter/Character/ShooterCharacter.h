@@ -32,6 +32,7 @@ public:
 
 	virtual void Destroyed() override;
 
+	UPROPERTY()
 	class AShooterPlayerState* ShooterPlayerState;
 
 protected:	
@@ -126,6 +127,7 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
 	float Health = 100.f;
 
+	UPROPERTY()
 	class AShooterPlayerController* ShooterPlayerController;
 
 	UFUNCTION()
