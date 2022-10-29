@@ -15,7 +15,10 @@
 #include "MPShooter/MPShooter.h"
 #include "MPShooter/PlayerController/ShooterPlayerController.h"
 #include "MPShooter/GameMode/ShooterGameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
+#include "Sound/SoundCue.h"
+#include "Particles/ParticleSystemComponent.h"
 
 AShooterCharacter::AShooterCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -342,6 +345,16 @@ void AShooterCharacter::MulticastElim_Implementation() {
 	}
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Spawn elim bot
+	if (ElimBotEffect) {
+		FVector ElimBotSpawnPoint(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 200.f);
+		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ElimBotEffect, ElimBotSpawnPoint, GetActorRotation());		
+	}
+	// Spawn elim bot sound
+	if (ElimBotSound) {
+		UGameplayStatics::SpawnSoundAtLocation(this, ElimBotSound, GetActorLocation());
+	}
 }
 
 void AShooterCharacter::ElimTimerFinished() {
@@ -350,6 +363,15 @@ void AShooterCharacter::ElimTimerFinished() {
 	if (ShooterGameMode) {
 		ShooterGameMode->RequestRespawn(this, Controller);
 	}
+}
+
+void AShooterCharacter::Destroyed() {
+	Super::Destroyed();
+	// Destroy elim bot
+	if (ElimBotComponent) {
+		ElimBotComponent->DestroyComponent();
+	}
+
 }
 
 void AShooterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser) {

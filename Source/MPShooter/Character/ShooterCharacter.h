@@ -30,6 +30,8 @@ public:
 	/** Called only on server */
 	void Elim();
 
+	virtual void Destroyed() override;
+
 protected:	
 	virtual void BeginPlay() override;	
 
@@ -137,6 +139,19 @@ private:
 	float ElimDelay = 3.f;
 	
 	void ElimTimerFinished();
+
+	/**
+	* Elim bot
+	*/
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ElimBotEffect;
+
+	UPROPERTY(VisibleAnywhere)
+	UParticleSystemComponent* ElimBotComponent;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* ElimBotSound;
 
 	/**
 	* Dissolve Effect
