@@ -2,10 +2,11 @@
     MPShooter ToDo List
 ==============================
 
+    - [ ] Killed By text doesn't say who killed you, change it
     - [ ] Add option for static crosshair, just draw a singular image to screen
+    - [ ] 
     - [ ]
-    - [ ]
-    - [ ]
+    
 
 
 ==============================
