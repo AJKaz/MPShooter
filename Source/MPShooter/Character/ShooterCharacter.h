@@ -32,6 +32,8 @@ public:
 
 	virtual void Destroyed() override;
 
+	class AShooterPlayerState* ShooterPlayerState;
+
 protected:	
 	virtual void BeginPlay() override;	
 
@@ -57,6 +59,7 @@ protected:
 	UFUNCTION()	
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
 	void UpdateHUDHealth();
+	void PollInit();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)

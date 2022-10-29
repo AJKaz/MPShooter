@@ -19,6 +19,7 @@
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "MPShooter/PlayerState/ShooterPlayerState.h"
 
 AShooterCharacter::AShooterCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -103,7 +104,7 @@ void AShooterCharacter::Tick(float DeltaTime) {
 	}
 
 	HideCameraIfCharacterClose();
-
+	PollInit();
 }
 
 
@@ -399,6 +400,18 @@ void AShooterCharacter::UpdateHUDHealth() {
 	ShooterPlayerController = ShooterPlayerController == nullptr ? Cast<AShooterPlayerController>(Controller) : ShooterPlayerController;
 	if (ShooterPlayerController) {
 		ShooterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+/// <summary>
+/// Poll any relevant classes and initialize HUD
+/// </summary>
+void AShooterCharacter::PollInit() {
+	if (ShooterPlayerState == nullptr) {
+		ShooterPlayerState = GetPlayerState<AShooterPlayerState>();
+		if (ShooterPlayerState) {
+			ShooterPlayerState->AddToScore(0.f);
+		}
 	}
 }
 
