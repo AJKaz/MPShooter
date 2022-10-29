@@ -42,6 +42,29 @@ void AShooterPlayerController::SetHUDDeaths(int32 Deaths) {
 	}
 }
 
+void AShooterPlayerController::UpdateDeathMessage(const FString KilledBy) {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD &&
+		ShooterHUD->CharacterOverlay &&
+		ShooterHUD->CharacterOverlay->DeathMessage &&
+		ShooterHUD->CharacterOverlay->KilledBy) {
+		ShooterHUD->CharacterOverlay->KilledBy->SetText(FText::FromString(KilledBy));
+		ShooterHUD->CharacterOverlay->KilledBy->SetVisibility(ESlateVisibility::Visible);
+		ShooterHUD->CharacterOverlay->DeathMessage->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void AShooterPlayerController::HideDeathMessage() {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD &&
+		ShooterHUD->CharacterOverlay &&
+		ShooterHUD->CharacterOverlay->DeathMessage &&
+		ShooterHUD->CharacterOverlay->KilledBy) {
+		ShooterHUD->CharacterOverlay->KilledBy->SetVisibility(ESlateVisibility::Collapsed);
+		ShooterHUD->CharacterOverlay->DeathMessage->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
 void AShooterPlayerController::OnPossess(APawn* InPawn) {
 	Super::OnPossess(InPawn);
 
@@ -49,4 +72,6 @@ void AShooterPlayerController::OnPossess(APawn* InPawn) {
 	if (ShooterCharacter) {
 		SetHUDHealth(ShooterCharacter->GetHealth(), ShooterCharacter->GetMaxHealth());
 	}
+	HideDeathMessage();
+	
 }

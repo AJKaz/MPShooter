@@ -23,10 +23,14 @@ public:
 	virtual void OnRep_Score() override;
 
 	UFUNCTION()
-	virtual void OnRep_Deaths();
+	void OnRep_Deaths();
+
+	UFUNCTION()
+	void OnRep_KilledBy();
 
 	void AddToScore(float ScoreAmount);
 	void AddToDeaths(int32 DeathsAmount);
+	void UpdateDeathMessage(FString KillerName);
 
 private:
 	UPROPERTY()
@@ -36,5 +40,8 @@ private:
 
 	UPROPERTY(ReplicatedUsing = OnRep_Deaths)
 	int32 Deaths;	
+
+	UPROPERTY(ReplicatedUsing = OnRep_KilledBy)
+	FString KilledBy;
 
 };

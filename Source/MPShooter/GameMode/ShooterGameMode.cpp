@@ -10,16 +10,15 @@
 
 void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, AShooterPlayerController* VictimController, AShooterPlayerController* AttackerController) {
 	AShooterPlayerState* AttackerPlayerState = AttackerController ? Cast<AShooterPlayerState>(AttackerController->PlayerState) : nullptr;
-	AShooterPlayerState* VictumPlayerState = VictimController ? Cast<AShooterPlayerState>(VictimController->PlayerState) : nullptr;
+	AShooterPlayerState* VictimPlayerState = VictimController ? Cast<AShooterPlayerState>(VictimController->PlayerState) : nullptr;
 
 	// Add kills to kill counter
-	if (AttackerPlayerState && AttackerPlayerState != VictumPlayerState) {
+	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState) {
 		AttackerPlayerState->AddToScore(1.f);
 	}
-	if (VictumPlayerState) {
-		VictumPlayerState->AddToDeaths(1);
+	if (VictimPlayerState) {
+		VictimPlayerState->AddToDeaths(1);
 	}
-
 
 	if (ElimmedCharacter) {
 		ElimmedCharacter->Elim();

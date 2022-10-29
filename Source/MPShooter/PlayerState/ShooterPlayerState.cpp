@@ -10,7 +10,9 @@ void AShooterPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AShooterPlayerState, Deaths);
+	DOREPLIFETIME(AShooterPlayerState, KilledBy);
 }
+
 
 void AShooterPlayerState::AddToScore(float ScoreAmount) {
 	SetScore(GetScore() + ScoreAmount);
@@ -56,3 +58,23 @@ void AShooterPlayerState::OnRep_Deaths() {
 	}
 }
 
+void AShooterPlayerState::UpdateDeathMessage(FString KillerName) {
+	KilledBy = KillerName;
+	Character = Character == nullptr ? Cast<AShooterCharacter>(GetPawn()) : Character;
+	if (Character) {
+		Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
+		if (Controller) {
+			Controller->UpdateDeathMessage(KilledBy);
+		}
+	}
+}
+
+void AShooterPlayerState::OnRep_KilledBy() {
+	Character = Character == nullptr ? Cast<AShooterCharacter>(GetPawn()) : Character;
+	if (Character) {
+		Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
+		if (Controller) {
+			Controller->UpdateDeathMessage(KilledBy);
+		}
+	}
+}

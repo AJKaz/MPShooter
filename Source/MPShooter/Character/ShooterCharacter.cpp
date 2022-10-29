@@ -86,6 +86,11 @@ void AShooterCharacter::BeginPlay() {
 	if (HasAuthority()) {
 		OnTakeAnyDamage.AddDynamic(this, &AShooterCharacter::ReceiveDamage);
 	}
+	ShooterPlayerController = Cast<AShooterPlayerController>(Controller);
+	if (ShooterPlayerController) {
+		ShooterPlayerController->HideDeathMessage();
+	}
+	
 }
 
 void AShooterCharacter::Tick(float DeltaTime) {
@@ -343,6 +348,9 @@ void AShooterCharacter::MulticastElim_Implementation() {
 	GetCharacterMovement()->StopMovementImmediately();
 	if (ShooterPlayerController) {
 		DisableInput(ShooterPlayerController);
+		// Display Death message:
+		// TEMP SOLUTION, NEED TO GET PLAYER'S NAME		
+		ShooterPlayerController->UpdateDeathMessage(FString("ur mom"));			
 	}
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);

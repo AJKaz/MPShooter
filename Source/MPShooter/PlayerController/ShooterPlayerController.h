@@ -19,6 +19,8 @@ public:
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDScore(float Score);
 	void SetHUDDeaths(int32 Deaths);
+	void UpdateDeathMessage(const FString KilledBy);
+	void HideDeathMessage();
 
 	virtual void OnPossess(APawn* InPawn) override;
 

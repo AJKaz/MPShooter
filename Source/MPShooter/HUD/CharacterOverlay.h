@@ -26,4 +26,10 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* DeathsAmount;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* KilledBy;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* DeathMessage;
 };
