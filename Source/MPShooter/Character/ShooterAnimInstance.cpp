@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "MPShooter/Weapons/Weapon.h"
+#include "MPShooter/ShooterTypes/CombatState.h"
 
 void UShooterAnimInstance::NativeInitializeAnimation() {
 	Super::NativeInitializeAnimation();
@@ -86,5 +87,6 @@ void UShooterAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 		*/
 	}
 
+	bUseFABRIK = ShooterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
 
 }
