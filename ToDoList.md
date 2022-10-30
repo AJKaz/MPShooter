@@ -1,8 +1,7 @@
 ==============================
     MPShooter ToDo List
 ==============================
-
-    - [ ] Killed By text doesn't say who killed you, change it
+    
     - [ ] Add option for static crosshair, just draw a singular image to screen
     - [ ] 
     - [ ]
@@ -15,6 +14,6 @@
 
     - [x] When holding a weapon and looking right (hip fire), left hand comes off of the left hand socket
         -> Fix: Changed Turning In Place threshold from +- 90 to += 55
-    - [ ]
+    - [ ] Killed By Text only displays on server (not replicating for some reason?)
     - [ ]
     - [ ]
