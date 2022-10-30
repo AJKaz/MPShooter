@@ -60,21 +60,27 @@ void AShooterPlayerState::OnRep_Deaths() {
 
 void AShooterPlayerState::UpdateDeathMessage(FString KillerName) {
 	KilledBy = KillerName;
+	UE_LOG(LogTemp, Warning, TEXT("KilledBy is being changed"));
 	Character = Character == nullptr ? Cast<AShooterCharacter>(GetPawn()) : Character;
-	if (Character) {
+	if (Character) {						
 		Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
 		if (Controller) {
-			Controller->UpdateDeathMessage(KilledBy);
+			Controller->DisplayDeathMessage(KilledBy);
 		}
 	}
 }
 
 void AShooterPlayerState::OnRep_KilledBy() {
+	UE_LOG(LogTemp, Warning, TEXT("OnRep_KilledBy()"));
 	Character = Character == nullptr ? Cast<AShooterCharacter>(GetPawn()) : Character;
 	if (Character) {
+		UE_LOG(LogTemp, Warning, TEXT("Character Valid"));		
 		Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
 		if (Controller) {
-			Controller->UpdateDeathMessage(KilledBy);
+			if (Character->IsLocallyControlled() && !HasAuthority()) {
+				UE_LOG(LogTemp, Warning, TEXT("UpdateDeathMessage is called"));
+			}
+			Controller->DisplayDeathMessage(KilledBy);
 		}
-	}
+	}	
 }

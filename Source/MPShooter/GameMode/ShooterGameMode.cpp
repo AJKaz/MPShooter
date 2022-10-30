@@ -20,9 +20,9 @@ void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, ASh
 		VictimPlayerState->AddToDeaths(1);
 	}
 	// Display "Killed by (player)" message
-	if (AttackerPlayerState && VictimController) {
+	if (AttackerPlayerState && VictimPlayerState) {
 		FString PlayerName = AttackerPlayerState->GetPlayerName();		
-		VictimController->UpdateDeathMessage(PlayerName);
+		VictimPlayerState->UpdateDeathMessage(PlayerName);
 	}
 
 	if (ElimmedCharacter) {
