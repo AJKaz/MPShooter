@@ -331,6 +331,10 @@ void AShooterCharacter::Elim() {
 }
 
 void AShooterCharacter::MulticastElim_Implementation() {
+	if (ShooterPlayerController) {
+		ShooterPlayerController->SetHUDWeaponAmmo(0);
+	}
+	
 	bElimmed = true;
 	PlayElimMontage();
 
@@ -347,10 +351,7 @@ void AShooterCharacter::MulticastElim_Implementation() {
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
 	if (ShooterPlayerController) {
-		DisableInput(ShooterPlayerController);
-		// Display Death message:
-		// TEMP SOLUTION, NEED TO GET PLAYER'S NAME		
-		ShooterPlayerController->UpdateDeathMessage(FString("ur mom"));			
+		DisableInput(ShooterPlayerController);	
 	}
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);

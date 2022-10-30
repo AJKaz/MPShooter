@@ -65,6 +65,14 @@ void AShooterPlayerController::HideDeathMessage() {
 	}
 }
 
+void AShooterPlayerController::SetHUDWeaponAmmo(int32 Ammo) {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->WeaponAmmoAmount) {
+		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
+		ShooterHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+}
+
 void AShooterPlayerController::OnPossess(APawn* InPawn) {
 	Super::OnPossess(InPawn);
 

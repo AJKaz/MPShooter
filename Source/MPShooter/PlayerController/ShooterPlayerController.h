@@ -21,6 +21,7 @@ public:
 	void SetHUDDeaths(int32 Deaths);
 	void UpdateDeathMessage(const FString KilledBy);
 	void HideDeathMessage();
+	void SetHUDWeaponAmmo(int32 Ammo);
 
 	virtual void OnPossess(APawn* InPawn) override;
 
