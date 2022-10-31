@@ -251,12 +251,31 @@ int32 UCombatComponent::AmountToReload() {
 }
 
 void UCombatComponent::Reload() {
-	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading) {
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
+	if (EquippedWeapon->GetAmmo() < EquippedWeapon->GetMagCapacity() && 
+		CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading) {
 		ServerReload();
 	}
 }
 
 void UCombatComponent::ServerReload_Implementation() {
+	CombatState = ECombatState::ECS_Reloading;
+	HandleReload();
+}
+
+void UCombatComponent::FinishReloading() {
+	if (Character == nullptr) return;
+	if (Character->HasAuthority()) {
+		CombatState = ECombatState::ECS_Unoccupied;
+		UpdateAmmoValues();
+	}
+	if (bFireButtonPressed) {
+		Fire();
+	}
+}
+
+void UCombatComponent::UpdateAmmoValues() {
 	if (Character == nullptr || EquippedWeapon == nullptr) return;
 
 	// Figure out how much ammo to add to mag:
@@ -272,20 +291,6 @@ void UCombatComponent::ServerReload_Implementation() {
 	}
 	// Add that ammo to mag
 	EquippedWeapon->AddAmmo(-ReloadAmount);
-
-	CombatState = ECombatState::ECS_Reloading;
-	HandleReload();
-
-}
-
-void UCombatComponent::FinishReloading() {
-	if (Character == nullptr) return;
-	if (Character->HasAuthority()) {
-		CombatState = ECombatState::ECS_Unoccupied;
-	}
-	if (bFireButtonPressed) {
-		Fire();
-	}
 }
 
 void UCombatComponent::OnRep_CombatState() {
