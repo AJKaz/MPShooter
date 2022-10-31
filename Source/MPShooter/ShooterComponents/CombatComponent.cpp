@@ -13,6 +13,7 @@
 #include "MPShooter/PlayerController/ShooterPlayerController.h"
 #include "Camera/CameraComponent.h"
 #include "TimerManager.h"
+#include "Sound/SoundCue.h"
 
 UCombatComponent::UCombatComponent() {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -234,6 +235,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
 
+	// Play equip sound
+	if (EquippedWeapon->EquipSound) {
+		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquipSound, Character->GetActorLocation());
+	}
+
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
 }
@@ -318,6 +324,10 @@ void UCombatComponent::OnRep_EquippedWeapon() {
 		if (HandSocket) {
 			// Attach weapon to right hand socket:
 			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+		}
+		// Play equip sound
+		if (EquippedWeapon->EquipSound) {
+			UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquipSound, Character->GetActorLocation());
 		}
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;

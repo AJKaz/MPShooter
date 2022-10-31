@@ -70,14 +70,9 @@ void UShooterAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 			// Get right hand location:
 			bLocallyControlled = true;
 			FTransform RightHandTransform = ShooterCharacter->GetMesh()->GetSocketTransform(FName("Hand_R"), ERelativeTransformSpace::RTS_World);
-			/*RightHandRotation = UKismetMathLibrary::FindLookAtRotation(
-				RightHandTransform.GetLocation(),
-				RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTarget()));*/
 			FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(FVector3d(), (RightHandTransform.GetLocation() - ShooterCharacter->GetHitTarget()));
 			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 30.f);
 		}
-		
-
 		/*
 		// Debug: Show direction weapon is aiming
 		FTransform MuzzleTipTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("MuzzleFlash"), ERelativeTransformSpace::RTS_World);
@@ -86,7 +81,7 @@ void UShooterAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 		DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), ShooterCharacter->GetHitTarget(), FColor::Orange);
 		*/
 	}
-
 	bUseFABRIK = ShooterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
-
+	bUseAimOffsets = ShooterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+	bTransformRightHand = ShooterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
 }
