@@ -25,9 +25,6 @@ public:
 	UFUNCTION()
 	void OnRep_Deaths();
 
-	UFUNCTION()
-	void OnRep_KilledBy();
-
 	void AddToScore(float ScoreAmount);
 	void AddToDeaths(int32 DeathsAmount);
 	void UpdateDeathMessage(FString KillerName);
@@ -41,7 +38,7 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_Deaths)
 	int32 Deaths;	
 
-	UPROPERTY(ReplicatedUsing = OnRep_KilledBy)
-	FString KilledBy;
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastDeathMessage(const FString& KillerName);
 
 };

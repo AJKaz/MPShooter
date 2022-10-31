@@ -238,6 +238,18 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 	Character->bUseControllerRotationYaw = true;
 }
 
+int32 UCombatComponent::AmountToReload() {
+	if (EquippedWeapon == nullptr) return 0;
+
+	int32 RoomInMag = EquippedWeapon->GetMagCapacity() - EquippedWeapon->GetAmmo();
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
+		int32 AmountCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		int32 Least = FMath::Min(RoomInMag, AmountCarried);
+		return FMath::Clamp(RoomInMag, 0, Least);
+	}
+	return 0;
+}
+
 void UCombatComponent::Reload() {
 	if (CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading) {
 		ServerReload();
@@ -245,7 +257,21 @@ void UCombatComponent::Reload() {
 }
 
 void UCombatComponent::ServerReload_Implementation() {
-	if (Character == nullptr) return;
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
+	// Figure out how much ammo to add to mag:
+	int32 ReloadAmount = AmountToReload();
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+	// Update HUD's carried ammo value
+	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
+	if (Controller) {
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+	// Add that ammo to mag
+	EquippedWeapon->AddAmmo(-ReloadAmount);
 
 	CombatState = ECombatState::ECS_Reloading;
 	HandleReload();
