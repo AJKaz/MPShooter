@@ -23,16 +23,21 @@ public:
 	void HideDeathMessage();
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
+	void SetHUDMatchCountdown(float CountdownTime);
 
-
+	virtual void Tick(float DeltaTime) override;
 	virtual void OnPossess(APawn* InPawn) override;
 
 protected:
 
 	virtual void BeginPlay() override;
+	void SetHUDTime();
 
 private:
 	UPROPERTY()
 	class AShooterHUD* ShooterHUD;
+
+	float MatchTime = 120.f;
+	uint32 CountdownInt = 0;
 
 };

@@ -191,6 +191,10 @@ void UCombatComponent::FireTimerFinished() {
 	if (bFireButtonPressed && EquippedWeapon->bAutomatic) {
 		Fire();		
 	}
+	// Reload weapon IF mag is empty
+	if (EquippedWeapon->IsEmpty()) {
+		Reload();
+	}
 }
 
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget) {
@@ -238,6 +242,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 	// Play equip sound
 	if (EquippedWeapon->EquipSound) {
 		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquipSound, Character->GetActorLocation());
+	}
+	
+	// Reload weapon IF mag is empty
+	if (EquippedWeapon->IsEmpty()) {
+		Reload();
 	}
 
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
