@@ -8,6 +8,29 @@
 #include "GameFramework/PlayerStart.h"
 #include "MPShooter/PlayerState/ShooterPlayerState.h"
 
+AShooterGameMode::AShooterGameMode() {
+	bDelayedStart = true;
+}
+
+void AShooterGameMode::BeginPlay() {
+	Super::BeginPlay();
+
+	LevelStartingTime = GetWorld()->GetTimeSeconds();
+}
+
+void AShooterGameMode::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+
+	// Check to see if in waiting to start state
+	if (MatchState == MatchState::WaitingToStart) {
+		CountdownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		if (CountdownTime <= 0.f) {
+			StartMatch();
+		}
+	}
+
+}
+
 void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, AShooterPlayerController* VictimController, AShooterPlayerController* AttackerController) {
 	AShooterPlayerState* AttackerPlayerState = AttackerController ? Cast<AShooterPlayerState>(AttackerController->PlayerState) : nullptr;
 	AShooterPlayerState* VictimPlayerState = VictimController ? Cast<AShooterPlayerState>(VictimController->PlayerState) : nullptr;
@@ -28,7 +51,6 @@ void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, ASh
 	if (ElimmedCharacter) {
 		ElimmedCharacter->Elim();
 	}
-	
 }
 
 void AShooterGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController) {
@@ -46,3 +68,4 @@ void AShooterGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController*
 		RestartPlayerAtPlayerStart(ElimmedController, PlayerSpawns[Selection]);
 	}
 }
+
