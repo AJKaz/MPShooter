@@ -7,12 +7,23 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "MPShooter/Character/ShooterCharacter.h"
-
+#include "Net/UnrealNetwork.h"
+#include "MPShooter/GameMode/ShooterGameMode.h"
+#include "MPShooter/HUD/Announcement.h"
 
 void AShooterPlayerController::BeginPlay() {
 	Super::BeginPlay();
 
 	ShooterHUD = Cast<AShooterHUD>(GetHUD());
+	if (ShooterHUD) {
+		ShooterHUD->AddAnnouncement();
+	}
+}
+
+void AShooterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AShooterPlayerController, MatchState);
 }
 
 void AShooterPlayerController::Tick(float DeltaTime) {
@@ -20,6 +31,7 @@ void AShooterPlayerController::Tick(float DeltaTime) {
 	
 	SetHUDTime();
 	CheckTimeSync(DeltaTime);
+	PollInit();
 }
 
 void AShooterPlayerController::CheckTimeSync(float DeltaTime) {
@@ -39,6 +51,11 @@ void AShooterPlayerController::SetHUDHealth(float Health, float MaxHealth) {
 		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
 		ShooterHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
 	}
+	else {
+		bInitializeCharacterOverlay = true;
+		HUDHealth = Health;
+		HUDMaxHealth = MaxHealth;
+	}
 }
 
 void AShooterPlayerController::SetHUDScore(float Score) {
@@ -47,6 +64,10 @@ void AShooterPlayerController::SetHUDScore(float Score) {
 		FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
 		ShooterHUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(ScoreText));
 	}
+	else {
+		bInitializeCharacterOverlay = true;
+		HUDScore = Score;
+	}
 }
 
 void AShooterPlayerController::SetHUDDeaths(int32 Deaths) {
@@ -54,6 +75,10 @@ void AShooterPlayerController::SetHUDDeaths(int32 Deaths) {
 	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->DeathsAmount) {
 		FString DeathsText = FString::Printf(TEXT("%d"), Deaths);
 		ShooterHUD->CharacterOverlay->DeathsAmount->SetText(FText::FromString(DeathsText));
+	}
+	else {
+		bInitializeCharacterOverlay = true;
+		HUDDeaths = Deaths;
 	}
 }
 
@@ -152,5 +177,42 @@ void AShooterPlayerController::ReceivedPlayer() {
 	Super::ReceivedPlayer();
 	if (IsLocalController()) {
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
+	}
+}
+
+void AShooterPlayerController::PollInit() {
+	if (CharacterOverlay == nullptr) {
+		if (ShooterHUD && ShooterHUD->CharacterOverlay) {
+			CharacterOverlay = ShooterHUD->CharacterOverlay;
+			if (CharacterOverlay) {
+				SetHUDHealth(HUDHealth, HUDMaxHealth);
+				SetHUDScore(HUDScore);
+				SetHUDDeaths(HUDDeaths);
+			}
+		}
+	}
+}
+
+void AShooterPlayerController::OnMatchStateSet(FName State) {
+	MatchState = State;
+	if (MatchState == MatchState::InProgress) {
+		HandleMatchHasStarted();
+	}
+}
+
+void AShooterPlayerController::OnRep_MatchState() {
+	if (MatchState == MatchState::InProgress) {
+		HandleMatchHasStarted();
+	}
+}
+
+void AShooterPlayerController::HandleMatchHasStarted() {
+	// Adds character overlay to hud
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD) {
+		ShooterHUD->AddCharacterOverlay();
+		if (ShooterHUD->Announcement) {
+			ShooterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
+		}
 	}
 }
