@@ -2,10 +2,11 @@
     MPShooter ToDo List
 ==============================
     
-    - [ ] Roll while ADS
-    - [ ] Infinite ammo toggle
+    - [ ] Move AddToDeaths() inside of the MulticastRPC for DeathMessage
     - [ ] Slightly decrease jump velocity
-    - [ ] 
+
+    - [ ] Roll while ADS
+    - [ ] Infinite ammo toggle        
 
     - [ ] Add option for static crosshair, just draw a singular image to screen
     - [ ] Portals

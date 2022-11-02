@@ -10,14 +10,13 @@
 #include "Net/UnrealNetwork.h"
 #include "MPShooter/GameMode/ShooterGameMode.h"
 #include "MPShooter/HUD/Announcement.h"
+#include "Kismet/GameplayStatics.h"
 
 void AShooterPlayerController::BeginPlay() {
 	Super::BeginPlay();
 
 	ShooterHUD = Cast<AShooterHUD>(GetHUD());
-	if (ShooterHUD) {
-		ShooterHUD->AddAnnouncement();
-	}
+	ServerCheckMatchState();	
 }
 
 void AShooterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -39,6 +38,36 @@ void AShooterPlayerController::CheckTimeSync(float DeltaTime) {
 	if (IsLocalController() && TimeSyncRunningTime > TimeSyncFrequency) {
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
 		TimeSyncRunningTime = 0.f;
+	}
+}
+
+void AShooterPlayerController::ServerCheckMatchState_Implementation() {
+	AShooterGameMode* GameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
+	if (GameMode) {
+		// Set MatchTime, WarmupTime, and LevelStartingTime from GameMode
+		WarmupTime = GameMode->WarmupTime;
+		MatchTime = GameMode->MatchTime;
+		LevelStartingTime = GameMode->LevelStartingTime;
+		
+		// Set MatchState
+		MatchState = GameMode->GetMatchState();
+
+		ClientJoinMidgame(MatchState, WarmupTime, MatchTime, LevelStartingTime);
+
+		if (ShooterHUD && MatchState == MatchState::WaitingToStart) {
+			ShooterHUD->AddAnnouncement();
+		}
+	}
+}
+
+void AShooterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime) {	
+	WarmupTime = Warmup;
+	MatchTime = Match;
+	LevelStartingTime = StartingTime;
+	MatchState = StateOfMatch;
+	OnMatchStateSet(MatchState);
+	if (ShooterHUD && MatchState == MatchState::WaitingToStart) {
+		ShooterHUD->AddAnnouncement();
 	}
 }
 
@@ -138,6 +167,23 @@ void AShooterPlayerController::SetHUDMatchCountdown(float CountdownTime) {
 	}
 }
 
+void AShooterPlayerController::SetHUDAnnouncementCountdown(float CountdownTime) {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && ShooterHUD->Announcement && ShooterHUD->Announcement->WarmupTime) {
+		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
+		int32 Seconds = CountdownTime - Minutes * 60;
+		FString CountdownText = "";
+		if (Minutes < 10) {
+			CountdownText = FString::Printf(TEXT("%01d:%02d"), Minutes, Seconds);
+		}
+		else {
+			CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+		}
+
+		ShooterHUD->Announcement->WarmupTime->SetText(FText::FromString(CountdownText));
+	}
+}
+
 void AShooterPlayerController::OnPossess(APawn* InPawn) {
 	Super::OnPossess(InPawn);
 
@@ -150,9 +196,18 @@ void AShooterPlayerController::OnPossess(APawn* InPawn) {
 
 
 void AShooterPlayerController::SetHUDTime() {
-	uint32 SecondsLeft = FMath::CeilToInt(MatchTime - GetServerTime());
+	float TimeLeft = 0.f;
+	if (MatchState == MatchState::WaitingToStart) TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
+	else if (MatchState == MatchState::InProgress) TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
+
+	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
 	if (CountdownInt != SecondsLeft) {
-		SetHUDMatchCountdown(MatchTime - GetServerTime());
+		if (MatchState == MatchState::WaitingToStart) {
+			SetHUDAnnouncementCountdown(TimeLeft);
+		}
+		else if (MatchState == MatchState::InProgress) {
+			SetHUDMatchCountdown(TimeLeft);
+		}
 	}
 	CountdownInt = SecondsLeft;
 }
