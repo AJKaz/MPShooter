@@ -6,6 +6,10 @@
 #include "GameFramework/GameMode.h"
 #include "ShooterGameMode.generated.h"
 
+namespace MatchState {
+	extern MPSHOOTER_API const FName Cooldown;	// Match duration ended. Display winner and begin cooldown timer
+}
+
 /**
  * 
  */
@@ -22,6 +26,10 @@ public:
 	virtual void PlayerEliminated(class AShooterCharacter* ElimmedCharacter, class AShooterPlayerController* VictimController, AShooterPlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController);
 
+	/**
+	* Game times
+	*/
+
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f;
 
@@ -29,6 +37,9 @@ public:
 	float MatchTime = 120.f;
 
 	float LevelStartingTime = 0.f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float CooldownTime = 10.f;
 
 protected:
 
@@ -38,5 +49,8 @@ protected:
 private:
 
 	float CountdownTime = 0.f; 
+
+public:
+	FORCEINLINE float GetCountdownTime() const { return CountdownTime; }
 
 };

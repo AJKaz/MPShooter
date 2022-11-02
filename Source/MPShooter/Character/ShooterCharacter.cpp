@@ -78,6 +78,7 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME_CONDITION(AShooterCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(AShooterCharacter, Health);
+	DOREPLIFETIME(AShooterCharacter, bDisableGameplay);
 }
 
 void AShooterCharacter::BeginPlay() {
@@ -97,6 +98,17 @@ void AShooterCharacter::BeginPlay() {
 void AShooterCharacter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
+	RotateInPlace(DeltaTime);
+	HideCameraIfCharacterClose();
+	PollInit();
+}
+
+void AShooterCharacter::RotateInPlace(float DeltaTime) {
+	if (bDisableGameplay) {
+		bUseControllerRotationYaw = false;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
 	if (GetLocalRole() > ENetRole::ROLE_SimulatedProxy && IsLocallyControlled()) {
 		AimOffset(DeltaTime);
 	}
@@ -108,36 +120,29 @@ void AShooterCharacter::Tick(float DeltaTime) {
 		}
 		CalculateAO_Pitch();
 	}
-
-	HideCameraIfCharacterClose();
-	PollInit();
 }
-
 
 void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	/* Movement Bindings */
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ThisClass::Jump);
-
 	PlayerInputComponent->BindAxis("MoveForward", this, &ThisClass::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ThisClass::MoveRight);
-
 	PlayerInputComponent->BindAxis("Turn", this, &ThisClass::Turn);
 	PlayerInputComponent->BindAxis("LookUp", this, &ThisClass::LookUp);
-
-	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ThisClass::InteractButtonPressed);
-
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ThisClass::CrouchButtonPressed);
 	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ThisClass::CrouchButtonReleased);
 
+	/* Combat Bindings */
 	PlayerInputComponent->BindAction("ADS", IE_Pressed, this, &ThisClass::ADSButtonPressed);
 	PlayerInputComponent->BindAction("ADS", IE_Released, this, &ThisClass::ADSButtonReleased);
-
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ThisClass::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ThisClass::FireButtonReleased);
-
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ThisClass::ReloadButtonPressed);
 
+	/* Misc Bindings */
+	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ThisClass::InteractButtonPressed);
 	//PlayerInputComponent->BindAction("Drop", IE_Pressed, this, &ThisClass::DropButtonPressed);
 }
 
@@ -194,6 +199,7 @@ void AShooterCharacter::PlayHitReactMontage() {
 }
 
 void AShooterCharacter::MoveForward(float Value) {
+	if (bDisableGameplay) return;
 	if (Controller != nullptr && Value != 0.f) {
 		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
 		// Parallel vector to ground:
@@ -203,6 +209,7 @@ void AShooterCharacter::MoveForward(float Value) {
 }
 
 void AShooterCharacter::MoveRight(float Value) {
+	if (bDisableGameplay) return;
 	if (Controller != nullptr && Value != 0.f) {
 		const FRotator YawRotation(0.f, Controller->GetControlRotation().Yaw, 0.f);
 		// Parallel vector to ground:
@@ -220,6 +227,7 @@ void AShooterCharacter::LookUp(float Value) {
 }
 
 void AShooterCharacter::InteractButtonPressed() {
+	if (bDisableGameplay) return;
 	if (Combat) {
 		if (HasAuthority()) {
 			Combat->EquipWeapon(OverlappingWeapon);
@@ -231,42 +239,50 @@ void AShooterCharacter::InteractButtonPressed() {
 }
 
 void AShooterCharacter::CrouchButtonPressed() {
+	if (bDisableGameplay) return;
 	Crouch();		
 }
 
 void AShooterCharacter::CrouchButtonReleased() {
+	if (bDisableGameplay) return;
 	UnCrouch();
 }
 
 void AShooterCharacter::ADSButtonPressed() {
+	if (bDisableGameplay) return;
 	if (Combat) {
 		Combat->SetAiming(true);
 	}
 }
 
 void AShooterCharacter::ADSButtonReleased() {
+	if (bDisableGameplay) return;
 	if (Combat) {
 		Combat->SetAiming(false);
 	}
 }
 
 void AShooterCharacter::Jump() {	
+	if (bDisableGameplay) return;
 	Super::Jump();
 }
 
 void AShooterCharacter::FireButtonPressed() {
+	if (bDisableGameplay) return;
 	if (Combat) {
 		Combat->FireButtonPressed(true);
 	}
 }
 
 void AShooterCharacter::FireButtonReleased() {
+	if (bDisableGameplay) return;
 	if (Combat) {
 		Combat->FireButtonPressed(false);
 	}
 }
 
 void AShooterCharacter::ReloadButtonPressed() {
+	if (bDisableGameplay) return;
 	if (Combat) {
 		Combat->Reload();
 	}
@@ -383,9 +399,7 @@ void AShooterCharacter::MulticastElim_Implementation() {
 	// Disable character movement, shooting, and collision
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();
-	if (ShooterPlayerController) {
-		DisableInput(ShooterPlayerController);	
-	}
+	bDisableGameplay = true;
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -413,6 +427,9 @@ void AShooterCharacter::Destroyed() {
 	// Destroy elim bot
 	if (ElimBotComponent) {
 		ElimBotComponent->DestroyComponent();
+	}
+	if (Combat && Combat->EquippedWeapon) {
+		Combat->EquippedWeapon->Destroy();
 	}
 
 }

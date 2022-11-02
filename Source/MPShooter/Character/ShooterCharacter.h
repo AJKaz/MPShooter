@@ -37,6 +37,9 @@ public:
 	UPROPERTY()
 	class AShooterPlayerState* ShooterPlayerState;
 
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
+
 protected:	
 	virtual void BeginPlay() override;	
 
@@ -65,6 +68,7 @@ protected:
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
 	void UpdateHUDHealth();
 	void PollInit();
+	void RotateInPlace(float DeltaTime);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -209,5 +213,7 @@ public:
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	ECombatState GetCombatState() const;
+	FORCEINLINE UCombatComponent* GetCombat() const { return Combat; }
+	FORCEINLINE bool GetDisableGameplay() const { return bDisableGameplay; }
 
 };
