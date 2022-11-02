@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerStart.h"
 #include "MPShooter/PlayerState/ShooterPlayerState.h"
+#include "MPShooter/GameState/ShooterGameState.h"
 
 namespace MatchState {
 	const FName Cooldown = FName("Cooldown");
@@ -62,9 +63,12 @@ void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, ASh
 	AShooterPlayerState* AttackerPlayerState = AttackerController ? Cast<AShooterPlayerState>(AttackerController->PlayerState) : nullptr;
 	AShooterPlayerState* VictimPlayerState = VictimController ? Cast<AShooterPlayerState>(VictimController->PlayerState) : nullptr;
 
+	AShooterGameState* ShooterGameState = GetGameState<AShooterGameState>();
+
 	// Add kills to kill counter
-	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState) {
+	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && ShooterGameState) {
 		AttackerPlayerState->AddToScore(1.f);
+		ShooterGameState->UpdateTopScore(AttackerPlayerState);
 	}
 	if (VictimPlayerState) {
 		VictimPlayerState->AddToDeaths(1);
