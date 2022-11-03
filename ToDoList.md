@@ -13,7 +13,11 @@
     - [ ] Powerups on buttons (+health / ammo)
     - [ ] Golden gun from easter egg? (2 teammates stand on buttons in middle of map for 15 seconds)
     
+ ==============================
+    Sound Tweaking
+==============================
 
+    - [ ] Tweak Rocket Launcher Sounds
 
 ==============================
     MPShooter Bug List
