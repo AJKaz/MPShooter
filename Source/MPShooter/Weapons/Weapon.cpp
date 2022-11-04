@@ -113,7 +113,7 @@ void AWeapon::SetHUDAmmo() {
 	}
 }
 
-void AWeapon::SpendRound() {
+void AWeapon::SpendRound() {	
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	SetHUDAmmo();
 }

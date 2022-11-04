@@ -161,8 +161,13 @@ private:
 	void UpdateAmmoValues();
 
 	/* Set to true for infinite carried ammo for all weapons */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Cheats")
 	bool bInfiniteCarriedAmmo = false;
+
+	/* Set to true for infinite ammo in all weapons' magazines */
+	/* Not yet implemented */
+	UPROPERTY(EditAnywhere, Category = "Cheats")
+	bool bInfiniteMagAmmo = false;
 
 public:	
 
