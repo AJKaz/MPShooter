@@ -160,6 +160,10 @@ private:
 
 	void UpdateAmmoValues();
 
+	/* Set to true for infinite carried ammo for all weapons */
+	UPROPERTY(EditAnywhere)
+	bool bInfiniteCarriedAmmo = false;
+
 public:	
 
 		

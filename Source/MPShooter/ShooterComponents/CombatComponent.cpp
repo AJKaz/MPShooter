@@ -296,7 +296,7 @@ void UCombatComponent::UpdateAmmoValues() {
 	// Figure out how much ammo to add to mag:
 	int32 ReloadAmount = AmountToReload();
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
-		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		if(!bInfiniteCarriedAmmo) CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
 	// Update HUD's carried ammo value
