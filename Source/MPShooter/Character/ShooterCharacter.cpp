@@ -432,6 +432,11 @@ void AShooterCharacter::MulticastElim_Implementation() {
 	if (ElimBotSound) {
 		UGameplayStatics::SpawnSoundAtLocation(this, ElimBotSound, GetActorLocation());
 	}
+
+	// Hide Sniper scope widget (if there is one)
+	if (IsLocallyControlled() && Combat && Combat->bAiming &&  Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle) {
+		ShowSniperScopeWidget(false);
+	}
 }
 
 void AShooterCharacter::ElimTimerFinished() {
