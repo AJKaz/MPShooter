@@ -6,7 +6,8 @@
     - [ ] Slightly decrease jump velocity
 
     - [ ] Roll while ADS
-    - [ ] Infinite ammo toggle        
+    - [ ] Infinite MAG ammo toggle
+    - [x] Infinite ammo toggle        
 
     - [ ] Add option for static crosshair, just draw a singular image to screen
     - [ ] Portals
