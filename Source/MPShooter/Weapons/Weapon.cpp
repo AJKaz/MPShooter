@@ -12,6 +12,7 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "MPShooter/ShooterComponents/CombatComponent.h"
 #include "MPShooter/PlayerController/ShooterPlayerController.h"
+#include "Components/TextBlock.h"
 
 
 AWeapon::AWeapon() {
@@ -186,7 +187,7 @@ void AWeapon::OnRep_WeaponState() {
 }
 
 void AWeapon::ShowPickupWidget(bool bShowWidget) {
-	if (PickupWidget) {
+	if (PickupWidget) {				
 		PickupWidget->SetVisibility(bShowWidget);
 	}
 }
