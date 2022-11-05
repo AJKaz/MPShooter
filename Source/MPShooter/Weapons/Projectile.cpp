@@ -9,6 +9,8 @@
 #include "Sound/SoundCue.h"
 #include "MPShooter/Character/ShooterCharacter.h"
 #include "MPShooter/MPShooter.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 
 AProjectile::AProjectile() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -45,12 +47,20 @@ void AProjectile::BeginPlay() {
 
 }
 
-void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) {		
+void AProjectile::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+}
+
+void AProjectile::StartDestroyTimer() {
+	GetWorldTimerManager().SetTimer(DestroyTimer, this, &AProjectile::DestroyTimerFinished, DestroyTime);
+}
+
+void AProjectile::DestroyTimerFinished() {
 	Destroy();
 }
 
-void AProjectile::Tick(float DeltaTime) {
-	Super::Tick(DeltaTime);
+void AProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) {		
+	Destroy();
 }
 
 void AProjectile::Destroyed() {
@@ -63,3 +73,38 @@ void AProjectile::Destroyed() {
 	}
 }
 
+void AProjectile::SpawnTrailSystem() {
+	if (TrailSystem) {
+		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(TrailSystem,
+			GetRootComponent(),
+			FName(),
+			GetActorLocation(),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false
+		);
+	}
+}
+
+void AProjectile::ExplodeDamage() {
+	// Apply rocket's fall of damage
+	APawn* FiringPawn = GetInstigator();
+	if (FiringPawn && HasAuthority()) {
+		AController* FiringController = FiringPawn->GetController();
+		if (FiringController) {
+			UGameplayStatics::ApplyRadialDamageWithFalloff(
+				this,
+				Damage,
+				MinimumDamage,
+				GetActorLocation(),
+				DamageInnerRadius,
+				DamageOuterRadius,
+				1.f,
+				UDamageType::StaticClass(),
+				TArray<AActor*>(),
+				this,
+				FiringController
+			);
+		}
+	}
+}
