@@ -477,6 +477,7 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming) {
 }
 
 void UCombatComponent::ThrowGrenade() {
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	// Play grenade throwing montage
 	if (Character) {
