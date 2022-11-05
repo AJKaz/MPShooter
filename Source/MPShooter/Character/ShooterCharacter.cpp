@@ -140,6 +140,7 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ThisClass::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ThisClass::FireButtonReleased);
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ThisClass::ReloadButtonPressed);
+	PlayerInputComponent->BindAction("ThrowGrenade", IE_Pressed, this, &AShooterCharacter::GrenadeButtonPressed);
 
 	/* Misc Bindings */
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ThisClass::InteractButtonPressed);
@@ -216,6 +217,13 @@ void AShooterCharacter::PlayHitReactMontage() {
 		AnimInstance->Montage_Play(HitReactMontage);
 		FName SectionName("FromFront");
 		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void AShooterCharacter::PlayThrowGrenadeMontage() {
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ThrowGrenadeMontage) {
+		AnimInstance->Montage_Play(ThrowGrenadeMontage);
 	}
 }
 
@@ -312,6 +320,12 @@ void AShooterCharacter::ReloadButtonPressed() {
 void AShooterCharacter::DropButtonPressed() {	
 	if (Combat && Combat->EquippedWeapon) {
 		Combat->EquippedWeapon->Dropped();
+	}
+}
+
+void AShooterCharacter::GrenadeButtonPressed() {
+	if (Combat) {
+		Combat->ThrowGrenade();
 	}
 }
 

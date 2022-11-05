@@ -239,7 +239,7 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
-	if (Character == nullptr || WeaponToEquip == nullptr) return;
+	if (Character == nullptr || WeaponToEquip == nullptr || CombatState != ECombatState::ECS_Unoccupied) return;
 
 	// If we have a weapon equipped, drop it
 	if (EquippedWeapon) {
@@ -296,7 +296,7 @@ void UCombatComponent::Reload() {
 	if (Character == nullptr || EquippedWeapon == nullptr) return;
 
 	if (EquippedWeapon->GetAmmo() < EquippedWeapon->GetMagCapacity() && 
-		CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading) {
+		CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied) {
 		ServerReload();
 	}
 }
@@ -379,6 +379,11 @@ void UCombatComponent::OnRep_CombatState() {
 		case ECombatState::ECS_Unoccupied:
 			if (bFireButtonPressed) {
 				Fire();
+			}
+			break;
+		case ECombatState::ECS_ThrowingGrenade:
+			if (Character && !Character->IsLocallyControlled()) {
+				Character->PlayThrowGrenadeMontage();
 			}
 			break;
 	}
@@ -469,6 +474,31 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming) {
 	if (Character) {
 		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
 	}
+}
+
+void UCombatComponent::ThrowGrenade() {
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	// Play grenade throwing montage
+	if (Character) {
+		Character->PlayThrowGrenadeMontage();
+		// Call server RPC if not the server
+		if (!Character->HasAuthority()) {
+			ServerThrowGrenade();
+		}		
+	}
+	
+}
+
+void UCombatComponent::ServerThrowGrenade_Implementation() {
+	CombatState = ECombatState::ECS_ThrowingGrenade;
+	// Play grenade throwing montage
+	if (Character) {
+		Character->PlayThrowGrenadeMontage();
+	}
+}
+
+void UCombatComponent::ThrowGrenadeFinished() {
+	CombatState = ECombatState::ECS_Unoccupied;
 }
 
 void UCombatComponent::InitializeCarriedAmmo() {

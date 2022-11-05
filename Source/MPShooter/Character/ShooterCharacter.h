@@ -23,10 +23,15 @@ public:
 	virtual void PostInitializeComponents() override;
 	virtual void OnRep_ReplicatedMovement() override;
 
+	/**
+	* Play Animation Montages
+	*/
+
 	void PlayFireMontage(bool bAiming);
 	void PlayReloadMontage();
 	void PlayElimMontage();
-	
+	void PlayThrowGrenadeMontage();
+
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim();
 	/** Called only on server */
@@ -46,7 +51,9 @@ public:
 protected:	
 	virtual void BeginPlay() override;	
 
-	/** Keybindings: */
+	/** 
+	* Keybindings: 
+	*/
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 	void Turn(float Value);
@@ -61,6 +68,7 @@ protected:
 	void FireButtonReleased();
 	void ReloadButtonPressed();
 	void DropButtonPressed();
+	void GrenadeButtonPressed();
 
 	void PlayHitReactMontage();
 	void AimOffset(float DeltaTime);
@@ -111,13 +119,16 @@ private:
 	class UAnimMontage* FireWeaponMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
-	class UAnimMontage* ReloadMontage;
+	UAnimMontage* ReloadMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
-	class UAnimMontage* HitReactMontage;
+	UAnimMontage* HitReactMontage;
 
 	UPROPERTY(EditAnywhere, Category = Combat)
-	class UAnimMontage* ElimMontage;	
+	UAnimMontage* ElimMontage;	
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ThrowGrenadeMontage;	
 
 	void HideCameraIfCharacterClose();
 
