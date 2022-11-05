@@ -10,6 +10,7 @@
 #include "Animation/AnimationAsset.h"
 #include "Casing.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "MPShooter/ShooterComponents/CombatComponent.h"
 #include "MPShooter/PlayerController/ShooterPlayerController.h"
 
 
@@ -119,6 +120,11 @@ void AWeapon::SpendRound() {
 }
 
 void AWeapon::OnRep_Ammo() {
+	ShooterOwnerCharacter = ShooterOwnerCharacter == nullptr ? Cast<AShooterCharacter>(GetOwner()) : ShooterOwnerCharacter;
+	if (ShooterOwnerCharacter && ShooterOwnerCharacter->GetCombat() && IsFull()) {
+		ShooterOwnerCharacter->GetCombat()->JumpToShotgunEnd();
+	}
+
 	SetHUDAmmo();
 }
 
@@ -205,6 +211,10 @@ void AWeapon::Dropped() {
 
 bool AWeapon::IsEmpty() {
 	return Ammo <= 0;
+}
+
+bool AWeapon::IsFull() {
+	return Ammo == MagCapacity;
 }
 
 void AWeapon::AddAmmo(int32 AmmoToAdd) {

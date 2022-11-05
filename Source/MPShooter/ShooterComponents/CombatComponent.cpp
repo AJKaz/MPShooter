@@ -14,6 +14,7 @@
 #include "Camera/CameraComponent.h"
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
+#include "MPShooter/Character/ShooterAnimInstance.h"
 
 UCombatComponent::UCombatComponent() {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -150,6 +151,13 @@ void UCombatComponent::FireButtonPressed(bool bPressed) {
 	}
 }
 
+void UCombatComponent::ShotgunShellReload() {
+	if (Character && Character->HasAuthority()) {
+		UpdateShotgunAmmoValues();
+	}
+}
+	
+
 void UCombatComponent::Fire() {
 	if (CanFire()) {
 
@@ -163,7 +171,11 @@ void UCombatComponent::Fire() {
 }
 
 bool UCombatComponent::CanFire() {
-	if (EquippedWeapon == nullptr) return false;	
+	if (EquippedWeapon == nullptr) return false;
+	// IF character is reloading a shotgun, let them shoot after each pellet reloads (if they click)
+	if (!EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) {
+		return true;
+	}
 	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }
 
@@ -171,6 +183,13 @@ void UCombatComponent::OnRep_CarriedAmmo() {
 	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
 	if (Controller) {
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+	// If character has a SHOTGUN, is reloading, and has no more carried shotgun ammo, stop reloading
+	if (CombatState == ECombatState::ECS_Reloading && 
+		EquippedWeapon != nullptr &&
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun && 
+		CarriedAmmo == 0) {
+		JumpToShotgunEnd();
 	}
 }
 
@@ -203,6 +222,14 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget) {
 	if (EquippedWeapon == nullptr) return;
+
+	// Let player shoot while reloading a shotgun
+	if (Character && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) {
+		Character->PlayFireMontage(bAiming);
+		EquippedWeapon->Fire(TraceHitTarget);
+		CombatState = ECombatState::ECS_Unoccupied;
+		return;
+	}
 
 	if (Character && CombatState == ECombatState::ECS_Unoccupied) {
 		Character->PlayFireMontage(bAiming);
@@ -296,6 +323,7 @@ void UCombatComponent::UpdateAmmoValues() {
 	// Figure out how much ammo to add to mag:
 	int32 ReloadAmount = AmountToReload();
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
+		// Subtract amount of ammo you're reloading from that weapon's carried ammo supply
 		if(!bInfiniteCarriedAmmo) CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
@@ -306,6 +334,41 @@ void UCombatComponent::UpdateAmmoValues() {
 	}
 	// Add that ammo to mag
 	EquippedWeapon->AddAmmo(-ReloadAmount);
+}
+
+void UCombatComponent::UpdateShotgunAmmoValues() {
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
+
+	// Remove ammo from carried ammo
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
+		// Subtract 1 pellet from shotgun's carried ammo supply (if InfiniteCarriedAmmo is false)
+		if (!bInfiniteCarriedAmmo) CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= 1;
+		// Update CarriedAmmo to correct value
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+	// Update HUD's carried ammo value
+	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
+	if (Controller) {
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+	// Add 1 pellet to shotgun
+	EquippedWeapon->AddAmmo(-1);
+	
+	// Let player fire after reloading 1 pellet
+	bCanFire = true;
+
+	// Check if shotgun mag capacity is full, and stop reloading if so
+	if (EquippedWeapon->IsFull() || CarriedAmmo == 0) {
+		JumpToShotgunEnd();
+	}
+}
+
+void UCombatComponent::JumpToShotgunEnd() {
+	// Jump to ShotgunEnd Montage Section
+	UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
+	if (AnimInstance && Character->GetReloadMontage()) {
+		AnimInstance->Montage_JumpToSection(FName("ShotgunEnd"));
+	}
 }
 
 void UCombatComponent::OnRep_CombatState() {
