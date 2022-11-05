@@ -25,6 +25,11 @@ AWeapon::AWeapon() {
 	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// Set weapon's colored outline
+	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+	WeaponMesh->MarkRenderStateDirty();
+	EnableCustomDepth(true);
+
 	// Detects overlaps with characters
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
 	AreaSphere->SetupAttachment(RootComponent);
@@ -35,7 +40,6 @@ AWeapon::AWeapon() {
 	PickupWidget->SetupAttachment(RootComponent);
 
 }
-
 
 void AWeapon::BeginPlay() {
 	Super::BeginPlay();	
@@ -76,31 +80,6 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(OtherActor);
 	if (ShooterCharacter) {
 		ShooterCharacter->SetOverlappingWeapon(nullptr);
-	}
-}
-
-void AWeapon::OnRep_WeaponState() {
-	switch (WeaponState) {
-	case EWeaponState::EWS_Equipped:
-		ShowPickupWidget(false);	
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		// Enable physics for SMG to have dangly strap
-		if (WeaponType == EWeaponType::EWT_SubmachineGun) {
-			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			WeaponMesh->SetEnableGravity(true);
-			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-		}
-		break;
-	case EWeaponState::EWS_Dropped:
-		WeaponMesh->SetSimulatePhysics(true);
-		WeaponMesh->SetEnableGravity(true);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
-		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-		break;
 	}
 }
 
@@ -154,6 +133,8 @@ void AWeapon::SetWeaponState(EWeaponState State) {
 			WeaponMesh->SetEnableGravity(true);
 			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 		}
+		// Disable custom depth (glowing outline)		
+		EnableCustomDepth(false);
 		break;
 	case EWeaponState::EWS_Dropped:		
 		if (HasAuthority()) {
@@ -165,8 +146,43 @@ void AWeapon::SetWeaponState(EWeaponState State) {
 		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+		// Enable custom depth (glowing outline)
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+		WeaponMesh->MarkRenderStateDirty();
+		EnableCustomDepth(true);
 		break;
 	}			
+}
+
+void AWeapon::OnRep_WeaponState() {
+	switch (WeaponState) {
+	case EWeaponState::EWS_Equipped:
+		ShowPickupWidget(false);
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// Enable physics for SMG to have dangly strap
+		if (WeaponType == EWeaponType::EWT_SubmachineGun) {
+			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			WeaponMesh->SetEnableGravity(true);
+			WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+		}
+		// Disable custom depth (glowing outline)
+		EnableCustomDepth(false);
+		break;
+	case EWeaponState::EWS_Dropped:
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+		// Enable custom depth (glowing outline)
+		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
+		WeaponMesh->MarkRenderStateDirty();
+		EnableCustomDepth(true);
+		break;
+	}
 }
 
 void AWeapon::ShowPickupWidget(bool bShowWidget) {
@@ -220,4 +236,10 @@ bool AWeapon::IsFull() {
 void AWeapon::AddAmmo(int32 AmmoToAdd) {
 	Ammo = FMath::Clamp(Ammo - AmmoToAdd, 0, MagCapacity);
 	SetHUDAmmo();
+}
+
+void AWeapon::EnableCustomDepth(bool bEnable) {
+	if (WeaponMesh) {
+		WeaponMesh->SetRenderCustomDepth(bEnable);
+	}
 }

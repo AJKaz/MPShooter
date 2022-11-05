@@ -72,6 +72,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	class USoundCue* EquipSound;
 
+	/**
+	* Enable or Disable Custom Depth (color'd glowing outline on weapons)
+	*/
+
+	void EnableCustomDepth(bool bEnable);
+
 protected:
 
 	virtual void BeginPlay() override;
