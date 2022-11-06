@@ -96,7 +96,9 @@ void AShooterCharacter::BeginPlay() {
 	if (ShooterPlayerController) {
 		ShooterPlayerController->HideDeathMessage();
 	}
-	
+	if (AttachedGrenade) {
+		AttachedGrenade->SetVisibility(false);
+	}
 }
 
 void AShooterCharacter::Tick(float DeltaTime) {

@@ -14,6 +14,7 @@
 #include "Camera/CameraComponent.h"
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
+#include "MPShooter/Weapons/Projectile.h"
 #include "MPShooter/Character/ShooterAnimInstance.h"
 
 UCombatComponent::UCombatComponent() {
@@ -430,6 +431,7 @@ void UCombatComponent::OnRep_CombatState() {
 			if (Character && !Character->IsLocallyControlled()) {
 				Character->PlayThrowGrenadeMontage();
 				AttachActorToLeftHand(EquippedWeapon);
+				ShowAttachedGrenade(true);
 			}
 			break;
 	}
@@ -506,12 +508,13 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming) {
 }
 
 void UCombatComponent::ThrowGrenade() {
-	if (CombatState != ECombatState::ECS_Unoccupied) return;
+	if (CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr) return;
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	// Play grenade throwing montage
 	if (Character) {
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
 		// Call server RPC if not the server
 		if (!Character->HasAuthority()) {
 			ServerThrowGrenade();
@@ -526,12 +529,37 @@ void UCombatComponent::ServerThrowGrenade_Implementation() {
 	if (Character) {
 		Character->PlayThrowGrenadeMontage();	
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
+	}
+}
+
+void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade) {
+	if (Character && Character->GetAttachedGrenade()) {
+		Character->GetAttachedGrenade()->SetVisibility(bShowGrenade);
 	}
 }
 
 void UCombatComponent::ThrowGrenadeFinished() {
 	CombatState = ECombatState::ECS_Unoccupied;
 	AttachActorToRightHand(EquippedWeapon);
+}
+
+void UCombatComponent::LaunchGrenade() {
+	// Hide character's grenade static mesh
+	ShowAttachedGrenade(false);
+
+	// Spawn grenade
+	if (Character && Character->HasAuthority() && GrenadeClass && Character->GetAttachedGrenade()) {
+		const FVector StartingLocation = Character->GetAttachedGrenade()->GetComponentLocation();
+		FVector ToTarget = HitTarget - StartingLocation;
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = Character;
+		SpawnParams.Instigator = Character;
+		UWorld* World = GetWorld();
+		if (World) {
+			World->SpawnActor<AProjectile>(GrenadeClass, StartingLocation, ToTarget.Rotation(), SpawnParams);
+		}
+	}
 }
 
 void UCombatComponent::InitializeCarriedAmmo() {
