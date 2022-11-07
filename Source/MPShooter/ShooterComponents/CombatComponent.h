@@ -202,7 +202,18 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Cheats")
 	bool bInfiniteMagAmmo = false;
 
-public:	
+	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
+	int32 Grenades = 4;
 
+	UPROPERTY(EditAnywhere)
+	int32 MaxGrenades = 4;
+
+	UFUNCTION()
+	void OnRep_Grenades();
+
+	void UpdateHUDGrenades();
+
+public:	
+	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 		
 };

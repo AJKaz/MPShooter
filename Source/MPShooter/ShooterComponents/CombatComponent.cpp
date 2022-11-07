@@ -126,6 +126,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, bAiming);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UCombatComponent, CombatState);
+	DOREPLIFETIME(UCombatComponent, Grenades);
 }
 
 void UCombatComponent::InterpFOV(float DeltaTime) {
@@ -507,8 +508,20 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming) {
 	}
 }
 
+void UCombatComponent::OnRep_Grenades() {
+	UpdateHUDGrenades();
+}
+
+void UCombatComponent::UpdateHUDGrenades() {
+	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
+	if (Controller) {
+		Controller->SetHUDGrenades(Grenades);
+	}
+
+}
+
 void UCombatComponent::ThrowGrenade() {
-	if (CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr) return;
+	if (Grenades == 0 || CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr) return;
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	// Play grenade throwing montage
 	if (Character) {
@@ -518,12 +531,18 @@ void UCombatComponent::ThrowGrenade() {
 		// Call server RPC if not the server
 		if (!Character->HasAuthority()) {
 			ServerThrowGrenade();
-		}		
+		}
+		else {
+			// Subtract 1 from character's grenade amount, then update HUD
+			Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+			UpdateHUDGrenades();
+		}
 	}
 	
 }
 
 void UCombatComponent::ServerThrowGrenade_Implementation() {
+	if (Grenades == 0) return;
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	// Play grenade throwing montage
 	if (Character) {
@@ -531,6 +550,9 @@ void UCombatComponent::ServerThrowGrenade_Implementation() {
 		AttachActorToLeftHand(EquippedWeapon);
 		ShowAttachedGrenade(true);
 	}
+	// Subtract 1 from character's grenade amount, then update HUD
+	Grenades = FMath::Clamp(Grenades - 1, 0, MaxGrenades);
+	UpdateHUDGrenades();
 }
 
 void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade) {
