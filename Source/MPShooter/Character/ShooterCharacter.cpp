@@ -513,9 +513,10 @@ void AShooterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	}
 }
 
-void AShooterCharacter::OnRep_Health() {
+void AShooterCharacter::OnRep_Health(float LastHealth) {
 	UpdateHUDHealth();
-	PlayHitReactMontage();
+	// If character was damaged, play HitReactMontage
+	if(Health < LastHealth) PlayHitReactMontage();
 }
 
 void AShooterCharacter::UpdateHUDHealth() {
