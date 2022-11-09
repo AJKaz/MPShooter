@@ -181,6 +181,21 @@ bool UCombatComponent::CanFire() {
 	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }
 
+void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount) {
+	// Ensure WeaponType key exists, then add ammo to that weapon's carried ammo amount
+	if (CarriedAmmoMap.Contains(WeaponType)) {
+		// Clamp to ensure you cant get more than max carried ammo (currently 999)
+		CarriedAmmoMap[WeaponType] = FMath::Clamp(CarriedAmmoMap[WeaponType] + AmmoAmount, 0, MaxCarriedAmmo);
+		UpdateCarriedAmmo();
+	}
+
+	// Check if weapon is empty & just picked up ammo for that weapon
+	// If so, reload weapon
+	if (EquippedWeapon && EquippedWeapon->IsEmpty() && EquippedWeapon->GetWeaponType() == WeaponType) {
+		Reload();
+	}
+}
+
 void UCombatComponent::OnRep_CarriedAmmo() {
 	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
 	if (Controller) {

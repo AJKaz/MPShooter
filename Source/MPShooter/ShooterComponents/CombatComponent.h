@@ -40,6 +40,8 @@ public:
 	UFUNCTION(Server, Reliable)
 	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
 
+	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -155,6 +157,9 @@ private:
 	// Carried ammo for weapon that is currently equipped
 	UPROPERTY(ReplicatedUsing = OnRep_CarriedAmmo)
 	int32 CarriedAmmo;
+
+	UPROPERTY(EditAnywhere)
+	int32 MaxCarriedAmmo = 999;
 
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
