@@ -21,6 +21,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "MPShooter/PlayerState/ShooterPlayerState.h"
 #include "MPShooter/Weapons/WeaponTypes.h"
+#include "MPShooter/ShooterComponents/BuffComponent.h"
 
 AShooterCharacter::AShooterCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -53,14 +54,19 @@ AShooterCharacter::AShooterCharacter() {
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
 
+	// Construct combat component
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
+
+	// Construct Buff Component
+	Buff = CreateDefaultSubobject<UBuffComponent>(TEXT("BuffComponent"));
+	Buff->SetIsReplicated(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 
 	// Jumping Variables:	
 	GetCharacterMovement()->AirControl = 0.88f;		// set to 1.0 for full in air control
-	GetCharacterMovement()->JumpZVelocity = 1650.f;
+	GetCharacterMovement()->JumpZVelocity = 1600.f;
 	GetCharacterMovement()->GravityScale = 3.3f;
 	GetCharacterMovement()->RotationRate.Yaw = 850.f;
 
@@ -157,6 +163,9 @@ void AShooterCharacter::PostInitializeComponents() {
 	Super::PostInitializeComponents();
 	if (Combat) {
 		Combat->Character = this;
+	}
+	if (Buff) {
+		Buff->Character = this;
 	}
 }
 
