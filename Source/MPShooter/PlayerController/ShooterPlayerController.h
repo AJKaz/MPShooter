@@ -19,6 +19,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	void SetHUDHealth(float Health, float MaxHealth);
+	void SetHUDShield(float Shield, float MaxShield);
 	void SetHUDScore(float Score);
 	void SetHUDDeaths(int32 Deaths);
 	void DisplayDeathMessage(const FString KilledBy);
@@ -99,12 +100,24 @@ private:
 
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
-
-	bool bInitializeCharacterOverlay = false;
-
+	
+	/**
+	* Post Initialization Variables
+	*/
 	float HUDHealth;
 	float HUDMaxHealth;
+	bool bInitializeHealth = false;
+
+	float HUDShield;
+	float HUDMaxShield;
+	bool bInitializeShield = false;
+
 	float HUDScore;
+	bool bInitializeScore = false;
+
 	int32 HUDDeaths;
+	bool bInitializeDeaths = false;
+
 	int32 HUDGrenades;
+	bool bInitializeGrenades = false;
 };

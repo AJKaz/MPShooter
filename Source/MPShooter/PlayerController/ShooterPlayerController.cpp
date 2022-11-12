@@ -86,9 +86,25 @@ void AShooterPlayerController::SetHUDHealth(float Health, float MaxHealth) {
 		ShooterHUD->CharacterOverlay->HealthText->SetText(FText::FromString(HealthText));
 	}
 	else {
-		bInitializeCharacterOverlay = true;
+		bInitializeHealth = true;
 		HUDHealth = Health;
 		HUDMaxHealth = MaxHealth;
+	}
+}
+
+void AShooterPlayerController::SetHUDShield(float Shield, float MaxShield) {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->ShieldBar && ShooterHUD->CharacterOverlay->ShieldText) {
+		const float ShieldPercent = Shield / MaxShield;
+		ShooterHUD->CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
+		// Round float shield values up to int values and set text
+		FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+		ShooterHUD->CharacterOverlay->ShieldText->SetText(FText::FromString(ShieldText));
+	}
+	else {
+		bInitializeShield = true;
+		HUDShield = Shield;
+		HUDMaxShield = MaxShield;
 	}
 }
 
@@ -99,7 +115,7 @@ void AShooterPlayerController::SetHUDScore(float Score) {
 		ShooterHUD->CharacterOverlay->ScoreAmount->SetText(FText::FromString(ScoreText));
 	}
 	else {
-		bInitializeCharacterOverlay = true;
+		bInitializeScore = true;
 		HUDScore = Score;
 	}
 }
@@ -111,7 +127,7 @@ void AShooterPlayerController::SetHUDDeaths(int32 Deaths) {
 		ShooterHUD->CharacterOverlay->DeathsAmount->SetText(FText::FromString(DeathsText));
 	}
 	else {
-		bInitializeCharacterOverlay = true;
+		bInitializeDeaths = true;
 		HUDDeaths = Deaths;
 	}
 }
@@ -205,6 +221,7 @@ void AShooterPlayerController::SetHUDGrenades(int32 Grenades) {
 	}
 	else {
 		HUDGrenades = Grenades;
+		bInitializeGrenades = true;
 	}
 }
 
@@ -214,6 +231,7 @@ void AShooterPlayerController::OnPossess(APawn* InPawn) {
 	AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(InPawn);
 	if (ShooterCharacter) {
 		SetHUDHealth(ShooterCharacter->GetHealth(), ShooterCharacter->GetMaxHealth());
+		SetHUDShield(ShooterCharacter->GetShield(), ShooterCharacter->GetMaxShield());
 	}
 	HideDeathMessage();
 }
@@ -273,13 +291,11 @@ void AShooterPlayerController::PollInit() {
 		if (ShooterHUD && ShooterHUD->CharacterOverlay) {
 			CharacterOverlay = ShooterHUD->CharacterOverlay;
 			if (CharacterOverlay) {
-				SetHUDHealth(HUDHealth, HUDMaxHealth);
-				SetHUDScore(HUDScore);
-				SetHUDDeaths(HUDDeaths);
-				AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(GetPawn());
-				if (ShooterCharacter && ShooterCharacter->GetCombat()) {
-					SetHUDGrenades(ShooterCharacter->GetCombat()->GetGrenades());
-				}			
+				if (bInitializeHealth) SetHUDHealth(HUDHealth, HUDMaxHealth);
+				if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
+				if (bInitializeScore) SetHUDScore(HUDScore);
+				if (bInitializeDeaths) SetHUDDeaths(HUDDeaths);
+				if (bInitializeGrenades) SetHUDGrenades(HUDGrenades);
 			}
 		}
 	}

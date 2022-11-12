@@ -88,6 +88,7 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	DOREPLIFETIME_CONDITION(AShooterCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(AShooterCharacter, Health);
+	DOREPLIFETIME(AShooterCharacter, Shield);
 	DOREPLIFETIME(AShooterCharacter, bDisableGameplay);
 }
 
@@ -95,6 +96,8 @@ void AShooterCharacter::BeginPlay() {
 	Super::BeginPlay();
 
 	UpdateHUDHealth();
+	UpdateHUDShield();
+
 	if (HasAuthority()) {
 		OnTakeAnyDamage.AddDynamic(this, &AShooterCharacter::ReceiveDamage);
 	}
@@ -501,11 +504,29 @@ void AShooterCharacter::Destroyed() {
 
 void AShooterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser) {
 	if (bElimmed) return;
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+
+	// Calculate how much damage to deal to health and shields
+	float DamageToHealth = Damage;
+	if (Shield > 0.f) {
+		if (Shield >= Damage) {
+			// Shield absorbs all of the damage, damage shield
+			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
+			DamageToHealth = 0.f;
+		}
+		else {
+			// Shield absorbs SOME damage, but not all	
+			DamageToHealth = FMath::Clamp(DamageToHealth - Shield, 0.f, Damage);
+			Shield = 0.f;
+		}
+	}
+
+	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
+
 	UpdateHUDHealth();
+	UpdateHUDShield();
 	PlayHitReactMontage();
 
-	// If health is 0, call game mode's player eliminated
+	// If health is 0, call game mode's player eliminated (player is dead)
 	if (Health == 0.f) {
 		AShooterGameMode* ShooterGameMode = GetWorld()->GetAuthGameMode<AShooterGameMode>();
 		if (ShooterGameMode) {
@@ -522,10 +543,23 @@ void AShooterCharacter::OnRep_Health(float LastHealth) {
 	if(Health < LastHealth) PlayHitReactMontage();
 }
 
+void AShooterCharacter::OnRep_Shield(float LastShield) {
+	UpdateHUDShield();
+	// If character was damaged, play HitReactMontage
+	if (Shield < LastShield) PlayHitReactMontage();
+}
+
 void AShooterCharacter::UpdateHUDHealth() {
 	ShooterPlayerController = ShooterPlayerController == nullptr ? Cast<AShooterPlayerController>(Controller) : ShooterPlayerController;
 	if (ShooterPlayerController) {
 		ShooterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void AShooterCharacter::UpdateHUDShield() {
+	ShooterPlayerController = ShooterPlayerController == nullptr ? Cast<AShooterPlayerController>(Controller) : ShooterPlayerController;
+	if (ShooterPlayerController) {
+		ShooterPlayerController->SetHUDShield(Shield, MaxShield);
 	}
 }
 
