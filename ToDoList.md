@@ -1,9 +1,12 @@
 ==============================
     MPShooter ToDo List
 ==============================
+    
+    - [ ] Create death barrier for falling off map
+    
     - [ ] Hide local mesh for player when ADS with sniper
     - [ ] Move AddToDeaths() inside of the MulticastRPC for DeathMessage
-    - [x] Slightly decrease jump velocity
+    - [ ] Slightly decrease jump velocity
 
     - [ ] Roll while ADS
     - [ ] Infinite MAG ammo toggle
