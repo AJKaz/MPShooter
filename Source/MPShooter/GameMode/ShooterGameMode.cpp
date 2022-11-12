@@ -84,6 +84,25 @@ void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, ASh
 	}
 }
 
+/* Called on player collision with death barrier */
+void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, AShooterPlayerController* VictimController) {
+	// Add to deaths:
+	AShooterPlayerState* VictimPlayerState = VictimController ? Cast<AShooterPlayerState>(VictimController->PlayerState) : nullptr;
+	if (VictimPlayerState) VictimPlayerState->AddToDeaths(1);
+
+	// Display killed by death barrier message
+	if (VictimPlayerState) {
+		FString DiedTo = FString(TEXT("Death Barrier"));
+		VictimPlayerState->UpdateDeathMessage(DiedTo);
+	}
+
+	// Kill player
+	if (ElimmedCharacter) {
+		ElimmedCharacter->Elim();
+	}
+
+}
+
 void AShooterGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController) {
 	// First destroy old character, then attempt to respawn character
 	if (ElimmedCharacter) {
