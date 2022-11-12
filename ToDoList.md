@@ -6,7 +6,7 @@
     
     - [ ] Hide local mesh for player when ADS with sniper
     - [ ] Move AddToDeaths() inside of the MulticastRPC for DeathMessage
-    - [ ] Slightly decrease jump velocity
+    - [x] Slightly decrease jump velocity
 
     - [ ] Roll while ADS
     - [ ] Infinite MAG ammo toggle
@@ -14,14 +14,16 @@
 
     - [ ] Add option for static crosshair, just draw a singular image to screen
     - [ ] Portals
-    - [x] Powerups on buttons (+health / ammo)
     - [ ] Golden gun from easter egg? (2 teammates stand on buttons in middle of map for 15 seconds)
+    - [x] Powerups on buttons (+health / ammo / speed / jumpboost)
     
  ==============================
     Sound Tweaking
 ==============================
 
     - [x] Tweak Rocket Launcher Sounds
+    - [x] Increase Shotgun Shoot Sound
+        Change: 1.0 -> 1.5
 
 ==============================
     MPShooter Bug List
