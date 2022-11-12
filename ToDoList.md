@@ -2,8 +2,6 @@
     MPShooter ToDo List
 ==============================
     
-    - [ ] Create death barrier for falling off map
-    
     - [ ] Hide local mesh for player when ADS with sniper
     - [ ] Move AddToDeaths() inside of the MulticastRPC for DeathMessage
     - [x] Slightly decrease jump velocity
@@ -15,7 +13,9 @@
     - [ ] Add option for static crosshair, just draw a singular image to screen
     - [ ] Portals
     - [ ] Golden gun from easter egg? (2 teammates stand on buttons in middle of map for 15 seconds)
+    
     - [x] Powerups on buttons (+health / ammo / speed / jumpboost)
+    - [x] Create death barrier for falling off map
     
  ==============================
     Sound Tweaking
@@ -23,7 +23,7 @@
 
     - [x] Tweak Rocket Launcher Sounds
     - [x] Increase Shotgun Shoot Sound
-        Change: 1.0 -> 1.5
+        Sound Cue Volume: 1.0 -> 1.5
 
 ==============================
     MPShooter Bug List
