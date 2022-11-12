@@ -26,9 +26,6 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UProgressBar* ShieldBar;
 
-	UPROPERTY(meta = (BindWidget))
-	UTextBlock* ShieldText;
-
 	/* Kills (score) */
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ScoreAmount;

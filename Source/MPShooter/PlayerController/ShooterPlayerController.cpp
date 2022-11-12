@@ -77,7 +77,7 @@ void AShooterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMat
 }
 
 void AShooterPlayerController::SetHUDHealth(float Health, float MaxHealth) {
-	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;	
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
 	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->HealthBar && ShooterHUD->CharacterOverlay->HealthText) {
 		const float HealthPercent = Health / MaxHealth;
 		ShooterHUD->CharacterOverlay->HealthBar->SetPercent(HealthPercent);
@@ -94,12 +94,12 @@ void AShooterPlayerController::SetHUDHealth(float Health, float MaxHealth) {
 
 void AShooterPlayerController::SetHUDShield(float Shield, float MaxShield) {
 	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
-	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->ShieldBar && ShooterHUD->CharacterOverlay->ShieldText) {
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->ShieldBar) {
 		const float ShieldPercent = Shield / MaxShield;
 		ShooterHUD->CharacterOverlay->ShieldBar->SetPercent(ShieldPercent);
-		// Round float shield values up to int values and set text
-		FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
-		ShooterHUD->CharacterOverlay->ShieldText->SetText(FText::FromString(ShieldText));
+		//// Round float shield values up to int values and set text
+		//FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+		//ShooterHUD->CharacterOverlay->ShieldText->SetText(FText::FromString(ShieldText));
 	}
 	else {
 		bInitializeShield = true;

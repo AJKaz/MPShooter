@@ -666,17 +666,24 @@ void AShooterCharacter::HideCameraIfCharacterClose() {
 
 	// If camera is squished up against player, hide character and weapon
 	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold) {
-		GetMesh()->SetVisibility(false);
+		ShowLocalMesh(false);
 		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh()) {
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
 		}
 	}
 	else {
-		GetMesh()->SetVisibility(true);
-		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh()) {
-			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
-		}
+		if (!bSniperAiming) {
+			ShowLocalMesh(true);
+			if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh()) {
+				Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+			}
+		}		
+		
 	}
+}
+
+void AShooterCharacter::ShowLocalMesh(bool bShow) {
+	GetMesh()->SetVisibility(bShow);	
 }
 
 ECombatState AShooterCharacter::GetCombatState() const {

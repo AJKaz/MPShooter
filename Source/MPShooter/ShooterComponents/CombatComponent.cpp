@@ -512,8 +512,13 @@ void UCombatComponent::SetAiming(bool bIsAiming) {
 
 	if (Character->IsLocallyControlled() && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle) {
 		Character->ShowSniperScopeWidget(bIsAiming);
-	}
 
+		// Hide Local Mesh & Gun while zoomed in with sniper
+		Character->ShowLocalMesh(!bIsAiming);
+		Character->bSniperAiming = bAiming;
+
+		EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = bAiming;
+	}
 }
 
 void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming) {

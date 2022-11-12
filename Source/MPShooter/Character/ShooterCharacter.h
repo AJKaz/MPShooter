@@ -51,6 +51,8 @@ public:
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
 
+	void ShowLocalMesh(bool bShow);
+	bool bSniperAiming = false;
 protected:	
 	virtual void BeginPlay() override;	
 

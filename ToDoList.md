@@ -2,9 +2,10 @@
     MPShooter ToDo List
 ==============================
     
-    - [ ] Hide local mesh for player when ADS with sniper
+    
     - [ ] Move AddToDeaths() inside of the MulticastRPC for DeathMessage
     - [x] Slightly decrease jump velocity
+    - [x] Hide local mesh for player when ADS with sniper
 
     - [ ] Roll while ADS
     - [ ] Infinite MAG ammo toggle
