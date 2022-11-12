@@ -28,12 +28,19 @@ void UBuffComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
 	HealRampUp(DeltaTime);
+	ShieldRampUp(DeltaTime);
 }
 
 void UBuffComponent::Heal(float HealAmount, float HealingTime) {
 	bHealing = true;
 	HealingRate = HealAmount / HealingTime;
 	AmountToHeal += HealAmount;
+}
+
+void UBuffComponent::RegenShield(float ShieldAmount, float RegenTime) {
+	bRegeningShield = true;
+	ShieldRegenRate = ShieldAmount / RegenTime;
+	ShieldRegenAmount += ShieldAmount;
 }
 
 void UBuffComponent::HealRampUp(float DeltaTime) {
@@ -53,6 +60,26 @@ void UBuffComponent::HealRampUp(float DeltaTime) {
 	if (AmountToHeal <= 0.f || Character->GetHealth() >= Character->GetMaxHealth()) {
 		bHealing = false;
 		AmountToHeal = 0.f;
+	}
+}
+
+void UBuffComponent::ShieldRampUp(float DeltaTime) {
+	// If not regening, or character is dead return
+	if (!bRegeningShield || Character == nullptr || Character->IsElimmed()) return;
+
+	// Figure out how much to regen THIS frame
+	const float RegenThisFrame = ShieldRegenRate * DeltaTime;
+
+	// Regen shield, clamping value between 0 and MaxShield
+	Character->SetShield(FMath::Clamp(Character->GetShield() + RegenThisFrame, 0.f, Character->GetMaxShield()));
+
+	Character->UpdateHUDShield();
+	ShieldRegenAmount -= RegenThisFrame;
+
+	// Stop regening shield
+	if (ShieldRegenAmount <= 0.f || Character->GetShield() >= Character->GetMaxShield()) {
+		bRegeningShield = false;
+		ShieldRegenAmount = 0.f;
 	}
 }
 

@@ -21,6 +21,7 @@ public:
 	void SetInitialJumpVelocity(float Velocity);
 
 	void Heal(float HealAmount, float HealingTime);
+	void RegenShield(float ShieldAmount, float RegenTime);
 	void BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffDuration);
 	void BuffJump(float BuffJumpVelocity, float BuffDuration);
 
@@ -29,6 +30,9 @@ protected:
 
 	/* Healing */
 	void HealRampUp(float DeltaTime);
+
+	/* Shield Regen */
+	void ShieldRampUp(float DeltaTime);
 
 private:
 	UPROPERTY()
@@ -41,6 +45,12 @@ private:
 	float HealingRate = 0.f;
 	float AmountToHeal = 0.f;
 
+	/**  
+	* Sheild Variables
+	*/
+	bool bRegeningShield = false;
+	float ShieldRegenRate = 0.f;
+	float ShieldRegenAmount = 0.f;
 
 	/**
 	* Speed Buff
