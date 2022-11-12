@@ -6,6 +6,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "MPShooter/Weapons/WeaponTypes.h"
 #include "Components/SphereComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
 
 // Sets default values
 APickup::APickup() {
@@ -30,6 +32,10 @@ APickup::APickup() {
 	PickupMesh->SetRelativeScale3D(FVector(3.f, 3.f, 3.f));
 	PickupMesh->SetRenderCustomDepth(true);
 	PickupMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_PURPLE);
+
+	// Create Niagara Component
+	PickupEffectComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("PickupEffectComponent"));
+	PickupEffectComponent->SetupAttachment(RootComponent);
 }
 
 void APickup::BeginPlay() {
@@ -60,6 +66,11 @@ void APickup::Destroyed() {
 	// play pickup sound
 	if (PickupSound) {
 		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, GetActorLocation());
+	}
+
+	// Spawn Niagara System for destroyed effect (if there is one)
+	if (PickupEffect) {
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PickupEffect, GetActorLocation(), GetActorRotation());
 	}
 }
 

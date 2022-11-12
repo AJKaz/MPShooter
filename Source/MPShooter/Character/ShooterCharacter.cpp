@@ -165,7 +165,10 @@ void AShooterCharacter::PostInitializeComponents() {
 		Combat->Character = this;
 	}
 	if (Buff) {
+		// Setup variables for buffs
 		Buff->Character = this;
+		Buff->SetInitialSpeed(GetCharacterMovement()->MaxWalkSpeed, GetCharacterMovement()->MaxWalkSpeedCrouched);
+		Buff->SetInitialJumpVelocity(GetCharacterMovement()->JumpZVelocity);
 	}
 }
 

@@ -42,6 +42,8 @@ public:
 
 	void PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount);
 
+	void SetSpeed(float BaseSpeed);
+
 protected:
 
 	virtual void BeginPlay() override;

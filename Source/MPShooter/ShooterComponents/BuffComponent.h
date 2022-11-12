@@ -17,7 +17,12 @@ public:
 	friend class AShooterCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	void SetInitialSpeed(float BaseSpeed, float CrouchSpeed);
+	void SetInitialJumpVelocity(float Velocity);
+
 	void Heal(float HealAmount, float HealingTime);
+	void BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffDuration);
+	void BuffJump(float BuffJumpVelocity, float BuffDuration);
 
 protected:
 	virtual void BeginPlay() override;
@@ -36,8 +41,24 @@ private:
 	float HealingRate = 0.f;
 	float AmountToHeal = 0.f;
 
-public:	
-	
 
-		
+	/**
+	* Speed Buff
+	*/
+	FTimerHandle SpeedBuffTimer;
+	void ResetSpeed();
+	float InitialBaseSpeed;
+	float InitialCrouchSpeed;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastSpeedBuff(float BaseSpeed, float CrouchSpeed);
+
+	/**
+	* Jump Buff
+	*/
+	FTimerHandle JumpBuffTimer;
+	void ResetJump();
+	float InitialJumpVelocity;
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastJumpBuff(float JumpVelocity);
 };

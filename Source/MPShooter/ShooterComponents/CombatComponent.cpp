@@ -602,6 +602,11 @@ void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuant
 	}
 }
 
+void UCombatComponent::SetSpeed(float BaseSpeed) {
+	AimWalkSpeed = BaseSpeed - 300.f;
+	BaseWalkSpeed = BaseSpeed;
+}
+
 void UCombatComponent::InitializeCarriedAmmo() {
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, StartingRocketAmmo);
