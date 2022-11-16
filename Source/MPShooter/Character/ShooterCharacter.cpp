@@ -159,6 +159,7 @@ void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ThisClass::FireButtonReleased);
 	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ThisClass::ReloadButtonPressed);
 	PlayerInputComponent->BindAction("ThrowGrenade", IE_Pressed, this, &AShooterCharacter::GrenadeButtonPressed);
+	PlayerInputComponent->BindAction("SwapWeapon", IE_Pressed, this, &ThisClass::SwapWeaponButtonPressed);
 
 	/* Misc Bindings */
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ThisClass::InteractButtonPressed);
@@ -282,12 +283,7 @@ void AShooterCharacter::LookUp(float Value) {
 void AShooterCharacter::InteractButtonPressed() {
 	if (bDisableGameplay) return;
 	if (Combat) {
-		if (HasAuthority()) {
-			Combat->EquipWeapon(OverlappingWeapon);
-		}
-		else {
-			ServerInteractButtonPressed();
-		}
+		ServerInteractButtonPressed();
 	}
 }
 
@@ -350,6 +346,12 @@ void AShooterCharacter::DropButtonPressed() {
 void AShooterCharacter::GrenadeButtonPressed() {
 	if (Combat) {
 		Combat->ThrowGrenade();
+	}
+}
+
+void AShooterCharacter::SwapWeaponButtonPressed() {
+	if (Combat && Combat->ShouldSwapWeapons()) {
+		Combat->SwapWeapons();
 	}
 }
 
@@ -428,19 +430,28 @@ void AShooterCharacter::SimProxiesTurn() {
 
 }
 
-void AShooterCharacter::Elim() {
-	// Drop Weapon, or destroy if it's default starting weapon
-	if (Combat && Combat->EquippedWeapon) {
-		if (Combat->EquippedWeapon->bDestroyWeapon) {
-			// Destroy Weapon
-			Combat->EquippedWeapon->Destroy();
-		}
-		else {
-			// Drop Weapon
-			Combat->EquippedWeapon->Dropped();
-		}		
+void AShooterCharacter::DropOrDestroyWeapon(AWeapon* Weapon) {
+	if (Weapon == nullptr) return;
+	if (Weapon->bDestroyWeapon) {
+		// Destroy weapon
+		Weapon->Destroy();
 	}
+	else {
+		// Drop Weapon
+		Weapon->Dropped();
+	}
+}
 
+void AShooterCharacter::DropOrDestroyWeapons() {
+	// Drop Weapon, or destroy if it's default starting weapon
+	if (Combat) {
+		if (Combat->EquippedWeapon) DropOrDestroyWeapon(Combat->EquippedWeapon);
+		if (Combat->SecondaryWeapon) DropOrDestroyWeapon(Combat->SecondaryWeapon);
+	}
+}
+
+void AShooterCharacter::Elim() {
+	DropOrDestroyWeapons();
 	MulticastElim();
 	GetWorldTimerManager().SetTimer(ElimTimer, this, &AShooterCharacter::ElimTimerFinished, ElimDelay);
 }

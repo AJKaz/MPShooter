@@ -78,6 +78,7 @@ protected:
 	void ReloadButtonPressed();
 	void DropButtonPressed();
 	void GrenadeButtonPressed();
+	void SwapWeaponButtonPressed();
 
 	void PlayHitReactMontage();
 	void AimOffset(float DeltaTime);
@@ -89,6 +90,8 @@ protected:
 	
 	void PollInit();
 	void RotateInPlace(float DeltaTime);
+	void DropOrDestroyWeapon(AWeapon* Weapon);
+	void DropOrDestroyWeapons();
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)

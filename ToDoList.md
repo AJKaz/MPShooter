@@ -9,15 +9,17 @@
 
     - [ ] Roll while ADS
     - [ ] Infinite MAG ammo toggle
-    - [x] Infinite ammo toggle        
+    - [x] Infinite ammo toggle    
+    - [ ] Add Player name above players on ADS
+        -> FString PlayerName = Pawn->GetPlayerState()->GetPlayerName();    
 
-    - [ ] Add option for static crosshair, just draw a singular image to screen
+    - [ ] Add option for static crosshair
     - [ ] Portals
     - [ ] Golden gun from easter egg? (2 teammates stand on buttons in middle of map for 15 seconds)
     
     - [x] Powerups on buttons (+health / ammo / speed / jumpboost)
     - [x] Create death barrier for falling off map
-    
+
  ==============================
     Sound Tweaking
 ==============================
