@@ -95,6 +95,9 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void AShooterCharacter::BeginPlay() {
 	Super::BeginPlay();
 
+	SpawnDefaultWeapon();
+	UpdateHUDAmmo();
+
 	UpdateHUDHealth();
 	UpdateHUDShield();
 
@@ -426,9 +429,16 @@ void AShooterCharacter::SimProxiesTurn() {
 }
 
 void AShooterCharacter::Elim() {
-	// Drop Weapon:
+	// Drop Weapon, or destroy if it's default starting weapon
 	if (Combat && Combat->EquippedWeapon) {
-		Combat->EquippedWeapon->Dropped();
+		if (Combat->EquippedWeapon->bDestroyWeapon) {
+			// Destroy Weapon
+			Combat->EquippedWeapon->Destroy();
+		}
+		else {
+			// Drop Weapon
+			Combat->EquippedWeapon->Dropped();
+		}		
 	}
 
 	MulticastElim();
@@ -563,10 +573,16 @@ void AShooterCharacter::UpdateHUDShield() {
 	}
 }
 
-/// <summary>
-/// Poll any relevant classes and initialize HUD
-/// </summary>
+void AShooterCharacter::UpdateHUDAmmo() {
+	ShooterPlayerController = ShooterPlayerController == nullptr ? Cast<AShooterPlayerController>(Controller) : ShooterPlayerController;
+	if (ShooterPlayerController && Combat && Combat->EquippedWeapon) {
+		ShooterPlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
+		ShooterPlayerController->SetHUDWeaponAmmo(Combat->EquippedWeapon->GetAmmo());
+	}
+}
+
 void AShooterCharacter::PollInit() {
+	// Poll any relevant classesand initialize HUD
 	if (ShooterPlayerState == nullptr) {
 		ShooterPlayerState = GetPlayerState<AShooterPlayerState>();
 		if (ShooterPlayerState) {
@@ -689,4 +705,19 @@ void AShooterCharacter::ShowLocalMesh(bool bShow) {
 ECombatState AShooterCharacter::GetCombatState() const {
 	if (Combat == nullptr) return ECombatState::ECS_MAX;
 	return Combat->CombatState;
+}
+
+void AShooterCharacter::SpawnDefaultWeapon() {
+	AShooterGameMode* ShooterGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
+	UWorld* World = GetWorld();
+	if (ShooterGameMode && World && !bElimmed && DefaultWeaponClass) {
+		// Inside this if statement IF using shootergamemode & on server
+		// Spawn default weapon
+		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeaponClass);
+		StartingWeapon->bDestroyWeapon = true;
+		// Equip Weapon
+		if (Combat) {
+			Combat->EquipWeapon(StartingWeapon);
+		}
+	}
 }

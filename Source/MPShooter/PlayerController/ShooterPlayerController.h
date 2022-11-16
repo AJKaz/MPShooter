@@ -100,7 +100,7 @@ private:
 
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
-	
+
 	/**
 	* Post Initialization Variables
 	*/
@@ -120,4 +120,10 @@ private:
 
 	int32 HUDGrenades;
 	bool bInitializeGrenades = false;
+
+	float HUDCarriedAmmo;
+	bool bInitializeCarriedAmmo = false;
+
+	float HUDWeaponAmmo;
+	bool bInitializeWeaponAmmo = false;
 };

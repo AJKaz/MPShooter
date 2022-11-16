@@ -161,6 +161,10 @@ void AShooterPlayerController::SetHUDWeaponAmmo(int32 Ammo) {
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		ShooterHUD->CharacterOverlay->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
 	}
+	else {
+		bInitializeWeaponAmmo = true;
+		HUDWeaponAmmo = Ammo;
+	}
 }
 
 void AShooterPlayerController::SetHUDCarriedAmmo(int32 Ammo) {
@@ -168,6 +172,10 @@ void AShooterPlayerController::SetHUDCarriedAmmo(int32 Ammo) {
 	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->CarriedAmmoAmount) {
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		ShooterHUD->CharacterOverlay->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
+	}
+	else {
+		bInitializeCarriedAmmo = true;
+		HUDCarriedAmmo = Ammo;
 	}
 }
 
@@ -232,6 +240,7 @@ void AShooterPlayerController::OnPossess(APawn* InPawn) {
 	if (ShooterCharacter) {
 		SetHUDHealth(ShooterCharacter->GetHealth(), ShooterCharacter->GetMaxHealth());
 		SetHUDShield(ShooterCharacter->GetShield(), ShooterCharacter->GetMaxShield());
+		ShooterCharacter->UpdateHUDAmmo();
 	}
 	HideDeathMessage();
 }
@@ -296,6 +305,8 @@ void AShooterPlayerController::PollInit() {
 				if (bInitializeScore) SetHUDScore(HUDScore);
 				if (bInitializeDeaths) SetHUDDeaths(HUDDeaths);
 				if (bInitializeGrenades) SetHUDGrenades(HUDGrenades);
+				if (bInitializeCarriedAmmo) SetHUDCarriedAmmo(HUDCarriedAmmo);
+				if (bInitializeWeaponAmmo) SetHUDWeaponAmmo(HUDWeaponAmmo);
 			}
 		}
 	}
