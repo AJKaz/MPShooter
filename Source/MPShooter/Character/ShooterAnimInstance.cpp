@@ -82,6 +82,9 @@ void UShooterAnimInstance::NativeUpdateAnimation(float DeltaTime) {
 		*/
 	}
 	bUseFABRIK = ShooterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied;
+	if (ShooterCharacter->IsLocallyControlled() && ShooterCharacter->GetCombatState() != ECombatState::ECS_ThrowingGrenade) {
+		bUseFABRIK = !ShooterCharacter->IsLocallyReloading();
+	}
 	bUseAimOffsets = ShooterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !ShooterCharacter->GetDisableGameplay();
 	bTransformRightHand = ShooterCharacter->GetCombatState() == ECombatState::ECS_Unoccupied && !ShooterCharacter->GetDisableGameplay();
 }

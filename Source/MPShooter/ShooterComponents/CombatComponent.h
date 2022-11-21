@@ -45,6 +45,8 @@ public:
 
 	void SetSpeed(float BaseSpeed);
 
+	bool bLocallyReloading = false;
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -128,8 +130,13 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
 	AWeapon* SecondaryWeapon;
 
-	UPROPERTY(Replicated)
-	bool bAiming;
+	UPROPERTY(ReplicatedUsing = OnRep_Aiming)
+	bool bAiming = false;
+
+	bool bAimButtonPressed = false;
+
+	UFUNCTION()
+	void OnRep_Aiming();
 
 	float BaseWalkSpeed;
 	float AimWalkSpeed;
