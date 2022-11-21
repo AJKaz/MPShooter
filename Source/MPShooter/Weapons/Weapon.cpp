@@ -66,7 +66,6 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
-	DOREPLIFETIME(AWeapon, Ammo);
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
@@ -96,14 +95,41 @@ void AWeapon::SetHUDAmmo() {
 void AWeapon::SpendRound() {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	SetHUDAmmo();
+	// Server reconciliation
+	if (HasAuthority()) {
+		ClientUpdateAmmo(Ammo);
+	}
+	else if (ShooterOwnerCharacter && ShooterOwnerCharacter->IsLocallyControlled()){
+		// On client, increment sequence
+		++Sequence;
+	}
 }
 
-void AWeapon::OnRep_Ammo() {
+void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo) {
+	if (HasAuthority()) return;
+	// Sets ammo to server's authoratative count & predits server's next ammo amount based on sequence value
+	Ammo = ServerAmmo;
+	--Sequence;
+	Ammo -= Sequence;
+	SetHUDAmmo();
+}
+
+void AWeapon::AddAmmo(int32 AmmoToAdd) {
+	// Add ammo, set hud, call client's add ammo
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	SetHUDAmmo();
+	ClientAddAmmo(AmmoToAdd);
+}
+
+void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd) {
+	if (HasAuthority()) return;
+	// Add ammo
+	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	ShooterOwnerCharacter = ShooterOwnerCharacter == nullptr ? Cast<AShooterCharacter>(GetOwner()) : ShooterOwnerCharacter;
+	// If shotgun is done reloading, end reload montage
 	if (ShooterOwnerCharacter && ShooterOwnerCharacter->GetCombat() && IsFull()) {
 		ShooterOwnerCharacter->GetCombat()->JumpToShotgunEnd();
 	}
-
 	SetHUDAmmo();
 }
 
@@ -217,8 +243,7 @@ void AWeapon::Fire(const FVector& HitTarget) {
 			}
 		}
 	}
-	// Spend ammo if on server
-	if (HasAuthority()) SpendRound();
+	SpendRound();
 }
 
 void AWeapon::Dropped() {
@@ -238,11 +263,6 @@ bool AWeapon::IsEmpty() {
 
 bool AWeapon::IsFull() {
 	return Ammo == MagCapacity;
-}
-
-void AWeapon::AddAmmo(int32 AmmoToAdd) {
-	Ammo = FMath::Clamp(Ammo - AmmoToAdd, 0, MagCapacity);
-	SetHUDAmmo();
 }
 
 void AWeapon::EnableCustomDepth(bool bEnable) {

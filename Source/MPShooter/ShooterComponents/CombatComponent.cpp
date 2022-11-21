@@ -522,7 +522,7 @@ void UCombatComponent::UpdateAmmoValues() {
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
 	// Add that ammo to mag
-	EquippedWeapon->AddAmmo(-ReloadAmount);
+	EquippedWeapon->AddAmmo(ReloadAmount);
 }
 
 void UCombatComponent::UpdateShotgunAmmoValues() {
@@ -541,7 +541,7 @@ void UCombatComponent::UpdateShotgunAmmoValues() {
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
 	// Add 1 pellet to shotgun
-	EquippedWeapon->AddAmmo(-1);
+	EquippedWeapon->AddAmmo(1);
 
 	// Let player fire after reloading 1 pellet
 	bCanFire = true;
