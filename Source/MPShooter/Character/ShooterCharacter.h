@@ -55,13 +55,52 @@ public:
 	void ShowLocalMesh(bool bShow);
 	bool bSniperAiming = false;
 
-	void SpawnDefaultWeapon();
+	void SpawnDefaultWeapon();		
+
+	UPROPERTY()
+	TMap<FName, class UBoxComponent*> HitCollisionBoxes;
+
+protected:	
+	virtual void BeginPlay() override;	
+
+	/** 
+	* Keybindings: 
+	*/
+	void MoveForward(float Value);
+	void MoveRight(float Value);
+	void Turn(float Value);
+	void LookUp(float Value);
+	void InteractButtonPressed();
+	void CrouchButtonPressed();
+	void CrouchButtonReleased();
+	void ADSButtonPressed();
+	void ADSButtonReleased();
+	virtual void Jump() override;
+	void FireButtonPressed();
+	void FireButtonReleased();
+	void ReloadButtonPressed();
+	void DropButtonPressed();
+	void GrenadeButtonPressed();
+	void SwapWeaponButtonPressed();
+
+	void PlayHitReactMontage();
+	void AimOffset(float DeltaTime);
+	void CalculateAO_Pitch();
+	void SimProxiesTurn();
+
+	UFUNCTION()	
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+	
+	void PollInit();
+	void RotateInPlace(float DeltaTime);
+	void DropOrDestroyWeapon(AWeapon* Weapon);
+	void DropOrDestroyWeapons();
 
 	/**
 	* Hit boxes used for server-side rewind
 	*/
 	UPROPERTY(EditAnywhere)
-	class UBoxComponent* head;
+	UBoxComponent* head;
 
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* pelvis;
@@ -106,42 +145,6 @@ public:
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* foot_r;
 
-protected:	
-	virtual void BeginPlay() override;	
-
-	/** 
-	* Keybindings: 
-	*/
-	void MoveForward(float Value);
-	void MoveRight(float Value);
-	void Turn(float Value);
-	void LookUp(float Value);
-	void InteractButtonPressed();
-	void CrouchButtonPressed();
-	void CrouchButtonReleased();
-	void ADSButtonPressed();
-	void ADSButtonReleased();
-	virtual void Jump() override;
-	void FireButtonPressed();
-	void FireButtonReleased();
-	void ReloadButtonPressed();
-	void DropButtonPressed();
-	void GrenadeButtonPressed();
-	void SwapWeaponButtonPressed();
-
-	void PlayHitReactMontage();
-	void AimOffset(float DeltaTime);
-	void CalculateAO_Pitch();
-	void SimProxiesTurn();
-
-	UFUNCTION()	
-	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
-	
-	void PollInit();
-	void RotateInPlace(float DeltaTime);
-	void DropOrDestroyWeapon(AWeapon* Weapon);
-	void DropOrDestroyWeapons();
-
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class USpringArmComponent* CameraBoom;
@@ -158,11 +161,18 @@ private:
 	UFUNCTION()
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
 
+	/**
+	* Components
+	*/
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat;
 
 	UPROPERTY(VisibleAnywhere)
 	class UBuffComponent* Buff;
+
+	UPROPERTY(VisibleAnywhere)
+	class ULagCompensationComponent* LagCompensation;
 
 	UFUNCTION(Server, Reliable)
 	void ServerInteractButtonPressed();
