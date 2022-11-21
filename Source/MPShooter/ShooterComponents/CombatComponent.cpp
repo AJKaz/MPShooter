@@ -163,8 +163,8 @@ void UCombatComponent::ShotgunShellReload() {
 
 void UCombatComponent::Fire() {
 	if (CanFire()) {
-
 		ServerFire(HitTarget);
+		LocalFire(HitTarget);
 		if (EquippedWeapon) {
 			CrosshairShootingFactor = 0.75f;
 			bCanFire = false;
@@ -236,6 +236,12 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 }
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget) {
+	// Return IF on server or on client not controlling this character
+	if (Character && Character->IsLocallyControlled() && !Character->HasAuthority()) return;
+	LocalFire(TraceHitTarget);
+}
+
+void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget) {
 	if (EquippedWeapon == nullptr) return;
 
 	// Let player shoot while reloading a shotgun
@@ -263,14 +269,14 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 	else {
 		EquipPrimaryWeapon(WeaponToEquip);
 	}
-	
+
 
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
 }
 
 void UCombatComponent::SwapWeapons() {
-	if (CombatState == ECombatState::ECS_Reloading) return;
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
 	// Swaps primary and secondary weapon
 	AWeapon* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;

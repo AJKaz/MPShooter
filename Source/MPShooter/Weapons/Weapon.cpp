@@ -217,9 +217,9 @@ void AWeapon::Fire(const FVector& HitTarget) {
 				World->SpawnActor<ACasing>(CasingClass, SocketTransform.GetLocation(), SocketTransform.GetRotation().Rotator());
 			}
 		}
-
 	}
-	SpendRound();
+	// Spend ammo if on server
+	if (HasAuthority()) SpendRound();
 }
 
 void AWeapon::Dropped() {

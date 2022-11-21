@@ -14,12 +14,13 @@
 #include "MPShooter/ShooterComponents/CombatComponent.h"
 #include "MPShooter/GameState/ShooterGameState.h"
 #include "MPShooter/PlayerState/ShooterPlayerState.h"
+#include "Components/Image.h"
 
 void AShooterPlayerController::BeginPlay() {
 	Super::BeginPlay();
 
 	ShooterHUD = Cast<AShooterHUD>(GetHUD());
-	ServerCheckMatchState();	
+	ServerCheckMatchState();
 }
 
 void AShooterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -30,10 +31,34 @@ void AShooterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 
 void AShooterPlayerController::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
-	
+
 	SetHUDTime();
 	CheckTimeSync(DeltaTime);
 	PollInit();
+	CheckPing(DeltaTime);	
+}
+
+void AShooterPlayerController::CheckPing(float DeltaTime) {
+	HighPingRunningTime += DeltaTime;
+	if (HighPingRunningTime > CheckPingFrequency) {
+		// Check player's ping
+		PlayerState = PlayerState == nullptr ? GetPlayerState<APlayerState>() : PlayerState;
+		if (PlayerState) {
+			// Ping is compressed and divided by 4
+			if (PlayerState->GetPing() * 4 > HighPingThreshold) {
+				HighPingWarning();
+				PingAnimationRunningTime = 0.f;
+			}
+		}
+		HighPingRunningTime = 0.f;
+	}
+	// Stops High Ping Warning Animation after (HighPingDuration) seconds
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->HighPingAnimation && ShooterHUD->CharacterOverlay->IsAnimationPlaying(ShooterHUD->CharacterOverlay->HighPingAnimation)) {
+		PingAnimationRunningTime += DeltaTime;
+		if (PingAnimationRunningTime > HighPingDuration) {
+			StopHighPingWarning();
+		}
+	}
 }
 
 void AShooterPlayerController::CheckTimeSync(float DeltaTime) {
@@ -62,14 +87,14 @@ void AShooterPlayerController::ServerCheckMatchState_Implementation() {
 	}
 }
 
-void AShooterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime, float Cooldown) {	
+void AShooterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime, float Cooldown) {
 	// Set MatchState and Game Times
 	MatchState = StateOfMatch;
 	WarmupTime = Warmup;
 	MatchTime = Match;
 	LevelStartingTime = StartingTime;
 	CooldownTime = Cooldown;
-	
+
 	OnMatchStateSet(MatchState);
 	if (ShooterHUD && MatchState == MatchState::WaitingToStart) {
 		ShooterHUD->AddAnnouncement();
@@ -195,7 +220,7 @@ void AShooterPlayerController::SetHUDMatchCountdown(float CountdownTime) {
 		else {
 			CountdownText = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
 		}
-		
+
 		ShooterHUD->CharacterOverlay->MatchCountdownText->SetText(FText::FromString(CountdownText));
 	}
 }
@@ -230,6 +255,28 @@ void AShooterPlayerController::SetHUDGrenades(int32 Grenades) {
 	else {
 		HUDGrenades = Grenades;
 		bInitializeGrenades = true;
+	}
+}
+
+void AShooterPlayerController::HighPingWarning() {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->HighPingImage && ShooterHUD->CharacterOverlay->HighPingAnimation) {		
+		// Show high ping image
+		ShooterHUD->CharacterOverlay->HighPingImage->SetOpacity(1.f);
+		// Play animation
+		ShooterHUD->CharacterOverlay->PlayAnimation(ShooterHUD->CharacterOverlay->HighPingAnimation, 0.f, 5);
+	}
+}
+
+void AShooterPlayerController::StopHighPingWarning() {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->HighPingImage && ShooterHUD->CharacterOverlay->HighPingAnimation) {
+		// Hide high ping image
+		ShooterHUD->CharacterOverlay->HighPingImage->SetOpacity(0.f);
+		// Stop animation
+		if (ShooterHUD->CharacterOverlay->IsAnimationPlaying(ShooterHUD->CharacterOverlay->HighPingAnimation)) {
+			ShooterHUD->CharacterOverlay->StopAnimation(ShooterHUD->CharacterOverlay->HighPingAnimation);
+		}
 	}
 }
 
@@ -335,7 +382,7 @@ void AShooterPlayerController::HandleMatchHasStarted() {
 	// Adds character overlay to hud
 	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
 	if (ShooterHUD) {
-		if(ShooterHUD->CharacterOverlay == nullptr) ShooterHUD->AddCharacterOverlay();
+		if (ShooterHUD->CharacterOverlay == nullptr) ShooterHUD->AddCharacterOverlay();
 		if (ShooterHUD->Announcement) {
 			ShooterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
 		}
@@ -351,7 +398,7 @@ void AShooterPlayerController::HandleCooldown() {
 			ShooterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
 			FString AnnouncementText("New Match Starts In:");
 			ShooterHUD->Announcement->AnnouncementText->SetText(FText::FromString(AnnouncementText));
-			
+
 			// Display Winner
 			AShooterGameState* ShooterGameState = Cast<AShooterGameState>(UGameplayStatics::GetGameState(this));
 			AShooterPlayerState* ShooterPlayerState = GetPlayerState<AShooterPlayerState>();
@@ -367,7 +414,7 @@ void AShooterPlayerController::HandleCooldown() {
 				else if (TopPlayers.Num() == 1) {
 					InfoTextString = FString::Printf(TEXT("Winner: %s"), *TopPlayers[0]->GetPlayerName());
 				}
-				else if(TopPlayers.Num() > 1) {
+				else if (TopPlayers.Num() > 1) {
 					InfoTextString = FString("Players tied for win: \n");
 					for (auto TiedPlayer : TopPlayers) {
 						InfoTextString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
@@ -378,7 +425,7 @@ void AShooterPlayerController::HandleCooldown() {
 				ShooterHUD->Announcement->InfoText->SetText(FText::FromString(InfoTextString));
 			}
 
-			
+
 		}
 	}
 	// Disable input
