@@ -21,8 +21,8 @@ void ULagCompensationComponent::BeginPlay() {
 
 void ULagCompensationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
-	SaveFramePackage();	
+
+	SaveFramePackage();
 }
 
 void ULagCompensationComponent::SaveFramePackage() {
@@ -96,62 +96,50 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(AShooterCharac
 
 
 FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(AShooterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime) {
-	bool bReturn = HitCharacter == nullptr ||
+	bool bReturn =
+		HitCharacter == nullptr ||
 		HitCharacter->GetLagCompensation() == nullptr ||
 		HitCharacter->GetLagCompensation()->FrameHistory.GetHead() == nullptr ||
 		HitCharacter->GetLagCompensation()->FrameHistory.GetTail() == nullptr;
 	if (bReturn) return FServerSideRewindResult();
-
-	// Frame Package to check to verify a hit
+	// Frame package that we check to verify a hit
 	FFramePackage FrameToCheck;
-	bool bShouldInterp = true;
-
-	// Hit Character's Frame History
+	bool bShouldInterpolate = true;
+	// Frame history of the HitCharacter
 	const TDoubleLinkedList<FFramePackage>& History = HitCharacter->GetLagCompensation()->FrameHistory;
 	const float OldestHistoryTime = History.GetTail()->GetValue().Time;
 	const float NewestHistoryTime = History.GetHead()->GetValue().Time;
 	if (OldestHistoryTime > HitTime) {
-		// Too far back, character is too laggy to do server side rewind
+		// too far back - too laggy to do SSR
 		return FServerSideRewindResult();
 	}
 	if (OldestHistoryTime == HitTime) {
-		// Last frame of frame package, this is the frame to save
 		FrameToCheck = History.GetTail()->GetValue();
-		bShouldInterp = false;
+		bShouldInterpolate = false;
 	}
 	if (NewestHistoryTime <= HitTime) {
-		// Check head's frame package (probably on server, very low ping)
-		// Found frame to check
 		FrameToCheck = History.GetHead()->GetValue();
-		bShouldInterp = false;
+		bShouldInterpolate = false;
 	}
-
-	// Don't have frame yet, loop to check frame timing
 	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Younger = History.GetHead();
 	TDoubleLinkedList<FFramePackage>::TDoubleLinkedListNode* Older = Younger;
-	// Only loop IF we haven't found a frame to check from 2 conditions above
-	// Will loop most of the time
-	if (bShouldInterp) {
-		// Loops as long as older is still younger than the hit time
-		while (Older->GetValue().Time > HitTime) {
-			// Loop back in time until OlderTime < HitTime < YoungerTime
-			if (Older->GetNextNode() == nullptr) break;
-			Older = Older->GetNextNode();
-			if (Older->GetValue().Time > HitTime) {
-				Younger = Older;
-			}
+	while (Older->GetValue().Time > HitTime) // is Older still younger than HitTime?
+	{
+		// March back until: OlderTime < HitTime < YoungerTime
+		if (Older->GetNextNode() == nullptr) break;
+		Older = Older->GetNextNode();
+		if (Older->GetValue().Time > HitTime) {
+			Younger = Older;
 		}
 	}
-	// Highly unlikely, but frame to check is exactly last frame
-	if (Older->GetValue().Time == HitTime) {
+	if (Older->GetValue().Time == HitTime) // highly unlikely, but we found our frame to check
+	{
 		FrameToCheck = Older->GetValue();
-		bShouldInterp = false;
+		bShouldInterpolate = false;
 	}
-
-	// At this point, either we have frame to check or have 2 nodes 1 before and 1 after the frame to check
-	if (bShouldInterp) {
+	if (bShouldInterpolate) {
 		// Interpolate between Younger and Older
-		InterpBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
+		FrameToCheck = InterpBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
 	}
 
 	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
@@ -171,7 +159,7 @@ FFramePackage ULagCompensationComponent::InterpBetweenFrames(const FFramePackage
 		const FName& BoxInfoName = YoungerPair.Key;
 		const FBoxInformation& OlderBox = OlderFrame.HitBoxInfo[BoxInfoName];
 		const FBoxInformation& YoungerBox = YoungerFrame.HitBoxInfo[BoxInfoName];
-				
+
 		FBoxInformation InterpBoxInfo;
 		// Interpolate to the box's location and rotation between the given frame
 		InterpBoxInfo.Location = FMath::VInterpTo(OlderBox.Location, YoungerBox.Location, 1.f, InterpFraction);
@@ -186,8 +174,7 @@ FFramePackage ULagCompensationComponent::InterpBetweenFrames(const FFramePackage
 }
 
 
-FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackage& Package, AShooterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation)
-{
+FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackage& Package, AShooterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation) {
 	if (HitCharacter == nullptr) return FServerSideRewindResult();
 
 	FFramePackage CurrentFrame;
@@ -203,8 +190,7 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
 	FHitResult ConfirmHitResult;
 	const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
 	UWorld* World = GetWorld();
-	if (World)
-	{
+	if (World) {
 		World->LineTraceSingleByChannel(
 			ConfirmHitResult,
 			TraceStart,
@@ -219,10 +205,8 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
 		}
 		else // didn't hit head, check the rest of the boxes
 		{
-			for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
-			{
-				if (HitBoxPair.Value != nullptr)
-				{
+			for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes) {
+				if (HitBoxPair.Value != nullptr) {
 					HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 					HitBoxPair.Value->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 				}
@@ -233,8 +217,7 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
 				TraceEnd,
 				ECollisionChannel::ECC_Visibility
 			);
-			if (ConfirmHitResult.bBlockingHit)
-			{
+			if (ConfirmHitResult.bBlockingHit) {
 				ResetHitBoxes(HitCharacter, CurrentFrame);
 				EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 				return FServerSideRewindResult{ true, false };

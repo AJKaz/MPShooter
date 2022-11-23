@@ -445,7 +445,6 @@ void UCombatComponent::AttachActorToBackpack(AActor* ActorToAttach) {
 void UCombatComponent::UpdateCarriedAmmo() {
 	if (EquippedWeapon == nullptr) return;
 	// Set HUD Variables
-	EquippedWeapon->SetHUDAmmo();
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
@@ -482,9 +481,7 @@ int32 UCombatComponent::AmountToReload() {
 }
 
 void UCombatComponent::Reload() {
-	if (Character == nullptr || EquippedWeapon == nullptr) return;
-
-	if (EquippedWeapon && !EquippedWeapon->IsFull() && CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied && !bLocallyReloading) {
+	if (CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied && EquippedWeapon && !EquippedWeapon->IsFull() && !bLocallyReloading) {
 		ServerReload();
 		HandleReload();
 		bLocallyReloading = true;
@@ -492,6 +489,7 @@ void UCombatComponent::Reload() {
 }
 
 void UCombatComponent::ServerReload_Implementation() {
+	if (Character == nullptr || EquippedWeapon == nullptr) return;
 	CombatState = ECombatState::ECS_Reloading;
 	if(!Character->IsLocallyControlled()) HandleReload();
 }
@@ -508,6 +506,7 @@ void UCombatComponent::FinishReloading() {
 	}
 }
 
+
 void UCombatComponent::UpdateAmmoValues() {
 	if (Character == nullptr || EquippedWeapon == nullptr) return;
 
@@ -515,7 +514,8 @@ void UCombatComponent::UpdateAmmoValues() {
 	int32 ReloadAmount = AmountToReload();
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
 		// Subtract amount of ammo you're reloading from that weapon's carried ammo supply
-		if (!bInfiniteCarriedAmmo) CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		// if (!bInfiniteCarriedAmmo) CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
 	// Update HUD's carried ammo value
@@ -526,6 +526,7 @@ void UCombatComponent::UpdateAmmoValues() {
 	// Add that ammo to mag
 	EquippedWeapon->AddAmmo(ReloadAmount);
 }
+
 
 void UCombatComponent::UpdateShotgunAmmoValues() {
 	if (Character == nullptr || EquippedWeapon == nullptr) return;

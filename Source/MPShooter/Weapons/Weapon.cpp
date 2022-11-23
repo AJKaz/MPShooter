@@ -66,6 +66,7 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
+
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
@@ -92,6 +93,7 @@ void AWeapon::SetHUDAmmo() {
 	}
 }
 
+
 void AWeapon::SpendRound() {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	SetHUDAmmo();
@@ -107,12 +109,13 @@ void AWeapon::SpendRound() {
 
 void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo) {
 	if (HasAuthority()) return;
-	// Sets ammo to server's authoratative count & predits server's next ammo amount based on sequence value
+	// Sets ammo to server's authoratative count & predicts server's next ammo amount based on sequence value
 	Ammo = ServerAmmo;
-	Sequence--;
+	--Sequence;
 	Ammo -= Sequence;
 	SetHUDAmmo();
 }
+
 
 void AWeapon::AddAmmo(int32 AmmoToAdd) {
 	// Add ammo, set hud, call client's add ammo
@@ -121,7 +124,7 @@ void AWeapon::AddAmmo(int32 AmmoToAdd) {
 	ClientAddAmmo(AmmoToAdd);
 }
 
-void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd) {
+void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd) {	 
 	if (HasAuthority()) return;
 	// Add ammo
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);

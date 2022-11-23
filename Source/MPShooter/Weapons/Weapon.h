@@ -175,8 +175,10 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
 
+
 	UPROPERTY(EditAnywhere)
 	int32 Ammo;
+
 
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
@@ -193,7 +195,7 @@ private:
 	void ClientUpdateAmmo(int32 ServerAmmo);
 
 	UFUNCTION(Client, Reliable)
-	void ClientAddAmmo(int32 AmmoToAdd);	
+	void ClientAddAmmo(int32 AmmoToAdd);
 
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;	
