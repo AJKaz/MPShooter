@@ -83,7 +83,7 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(AShooterCharac
 	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
 
 	// Got a hit, apply damage
-	if (Character && Character->Controller && HitCharacter && DamageCauser && DamageCauser->GetDamage() && Confirm.bHitConfirmed) {
+	if (Character && HitCharacter && DamageCauser && Confirm.bHitConfirmed) {
 		UGameplayStatics::ApplyDamage(
 			HitCharacter,
 			DamageCauser->GetDamage(),
@@ -186,58 +186,63 @@ FFramePackage ULagCompensationComponent::InterpBetweenFrames(const FFramePackage
 }
 
 
-FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackage& Package, AShooterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation) {
-	if(HitCharacter == nullptr) return FServerSideRewindResult();
+FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackage& Package, AShooterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation)
+{
+	if (HitCharacter == nullptr) return FServerSideRewindResult();
 
 	FFramePackage CurrentFrame;
 	CacheBoxPositions(HitCharacter, CurrentFrame);
 	MoveBoxes(HitCharacter, Package);
-
-	// Disable mesh collision
 	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::NoCollision);
 
-	// Perform line trace & see if we hit head box
-	// Enable collision for head first
+	// Enable collision for the head first
 	UBoxComponent* HeadBox = HitCharacter->HitCollisionBoxes[FName("head")];
 	HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	HeadBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 
 	FHitResult ConfirmHitResult;
-	// Make sure to trace thru object to gurantee it hits
 	const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
 	UWorld* World = GetWorld();
-	if (World) {
-		World->LineTraceSingleByChannel(ConfirmHitResult, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility);
-		if (ConfirmHitResult.bBlockingHit) {
-			// Hit head, return early
+	if (World)
+	{
+		World->LineTraceSingleByChannel(
+			ConfirmHitResult,
+			TraceStart,
+			TraceEnd,
+			ECollisionChannel::ECC_Visibility
+		);
+		if (ConfirmHitResult.bBlockingHit) // we hit the head, return early
+		{
 			ResetHitBoxes(HitCharacter, CurrentFrame);
-			// Re-enable mesh collision
 			EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 			return FServerSideRewindResult{ true, true };
 		}
-		else {
-			// Didn't hit head, check the rest of the body (boxes)
-			for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes) {
-				if (HitBoxPair.Value != nullptr) {
-					// Enable collision
+		else // didn't hit head, check the rest of the boxes
+		{
+			for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
+			{
+				if (HitBoxPair.Value != nullptr)
+				{
 					HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 					HitBoxPair.Value->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 				}
 			}
-			World->LineTraceSingleByChannel(ConfirmHitResult, TraceStart, TraceEnd, ECollisionChannel::ECC_Visibility);
-			if (ConfirmHitResult.bBlockingHit) {
-				// Hit character, but not a headshot
+			World->LineTraceSingleByChannel(
+				ConfirmHitResult,
+				TraceStart,
+				TraceEnd,
+				ECollisionChannel::ECC_Visibility
+			);
+			if (ConfirmHitResult.bBlockingHit)
+			{
 				ResetHitBoxes(HitCharacter, CurrentFrame);
-				// Re-enable mesh collision
 				EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 				return FServerSideRewindResult{ true, false };
 			}
 		}
 	}
 
-	// No confirmed hit, reset boxes and confirm that
 	ResetHitBoxes(HitCharacter, CurrentFrame);
-	// Re-enable mesh collision
 	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 	return FServerSideRewindResult{ false, false };
 }
