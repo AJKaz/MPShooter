@@ -9,6 +9,8 @@
 #include "Sound/SoundCue.h"
 #include "WeaponTypes.h"
 #include "DrawDebugHelpers.h"
+#include "MPShooter/ShooterComponents/LagCompensationComponent.h"
+#include "MPShooter/PlayerController/ShooterPlayerController.h"
 
 void AHitScanWeapon::Fire(const FVector& HitTarget) {
 	Super::Fire(HitTarget);
@@ -27,15 +29,31 @@ void AHitScanWeapon::Fire(const FVector& HitTarget) {
 		WeaponTraceHit(Start, HitTarget, FireHit);
 
 		AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(FireHit.GetActor());
-		if (ShooterCharacter && HasAuthority() && InstigatorController) {
-			// Hit character, deal damage
-			UGameplayStatics::ApplyDamage(
-				ShooterCharacter,
-				Damage,
-				InstigatorController,
-				this,
-				UDamageType::StaticClass()
-			);
+		if (ShooterCharacter && InstigatorController) {
+			if (HasAuthority() && !bUseServerSideRewind) {
+				// Hit character, deal damage, no need for ServerSideRewind cause on server
+				UGameplayStatics::ApplyDamage(
+					ShooterCharacter,
+					Damage,
+					InstigatorController,
+					this,
+					UDamageType::StaticClass()
+				);
+			}
+			if (!HasAuthority() && bUseServerSideRewind) {
+				ShooterOwnerCharacter = ShooterOwnerCharacter == nullptr ? Cast<AShooterCharacter>(OwnerPawn) : ShooterOwnerCharacter;
+				ShooterOwnerController = ShooterOwnerController == nullptr ? Cast<AShooterPlayerController>(InstigatorController) : ShooterOwnerController;
+				if (ShooterOwnerController && ShooterOwnerCharacter && ShooterOwnerCharacter->GetLagCompensation()) {
+					ShooterOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
+						ShooterCharacter,
+						Start,
+						HitTarget,
+						ShooterOwnerController->GetServerTime() - ShooterOwnerController->SingleTripTime,
+						this
+					);
+				}
+			}
+			
 		}
 		// Spawn impact particles
 		if (ImpactParticles) {
