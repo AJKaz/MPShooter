@@ -99,7 +99,7 @@ void AWeapon::SpendRound() {
 	if (HasAuthority()) {
 		ClientUpdateAmmo(Ammo);
 	}
-	else if (ShooterOwnerCharacter && ShooterOwnerCharacter->IsLocallyControlled()){
+	else if (ShooterOwnerCharacter && ShooterOwnerCharacter->IsLocallyControlled()) {
 		// On client, increment sequence
 		++Sequence;
 	}
@@ -109,7 +109,7 @@ void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo) {
 	if (HasAuthority()) return;
 	// Sets ammo to server's authoratative count & predits server's next ammo amount based on sequence value
 	Ammo = ServerAmmo;
-	--Sequence;
+	Sequence--;
 	Ammo -= Sequence;
 	SetHUDAmmo();
 }

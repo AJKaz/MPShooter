@@ -308,7 +308,8 @@ void UCombatComponent::LocalShotgunFire(const TArray<FVector_NetQuantize>& Trace
 }
 
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
-	if (Character == nullptr || WeaponToEquip == nullptr || CombatState != ECombatState::ECS_Unoccupied) return;
+	if (Character == nullptr || WeaponToEquip == nullptr) return;
+	if (CombatState != ECombatState::ECS_Unoccupied) return;
 
 	if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr) {
 		// Have primary weapon, but not secondary weapon
@@ -318,7 +319,6 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 	else {
 		EquipPrimaryWeapon(WeaponToEquip);
 	}
-
 
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
@@ -370,12 +370,11 @@ void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip) {
 	SecondaryWeapon = WeaponToEquip;
 	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 
-	// Set owner and play equip sound
-	SecondaryWeapon->SetOwner(Character);
-	PlayEquipWeaponSound(WeaponToEquip);
-
 	// Attaches weapon to character's backpack
 	AttachActorToBackpack(WeaponToEquip);
+	PlayEquipWeaponSound(WeaponToEquip);
+	
+	SecondaryWeapon->SetOwner(Character);		
 }
 
 void UCombatComponent::OnRep_EquippedWeapon() {

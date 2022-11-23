@@ -729,7 +729,7 @@ void AShooterCharacter::TurnInPlace(float DeltaTime) {
 }
 
 void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
-	if (Combat) {
+	if (Combat && OverlappingWeapon) {
 		Combat->EquipWeapon(OverlappingWeapon);
 	}
 }
