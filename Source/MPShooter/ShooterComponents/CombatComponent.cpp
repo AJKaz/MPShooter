@@ -232,19 +232,6 @@ void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount) {
 	}
 }
 
-void UCombatComponent::OnRep_CarriedAmmo() {
-	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
-	if (Controller) {
-		Controller->SetHUDCarriedAmmo(CarriedAmmo);
-	}
-	// If character has a SHOTGUN, is reloading, and has no more carried shotgun ammo, stop reloading
-	if (CombatState == ECombatState::ECS_Reloading &&
-		EquippedWeapon != nullptr &&
-		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun &&
-		CarriedAmmo == 0) {
-		JumpToShotgunEnd();
-	}
-}
 
 void UCombatComponent::StartFireTimer() {
 	if (EquippedWeapon == nullptr || Character == nullptr) return;
@@ -327,21 +314,22 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 void UCombatComponent::SwapWeapons() {
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 	// Swaps primary and secondary weapon
-	AWeapon* TempWeapon = EquippedWeapon;
-	EquippedWeapon = SecondaryWeapon;
-	SecondaryWeapon = TempWeapon;
+	AWeapon* TempWeapon = SecondaryWeapon;
+	SecondaryWeapon = EquippedWeapon;
+	EquippedWeapon = TempWeapon;
 
-	// Set Weapon Values for new Primary Weapon
+	// Attach primary weapon
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	AttachActorToRightHand(EquippedWeapon);
+	// Attach secondary weapon
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttachActorToBackpack(SecondaryWeapon);
+	
+	// Update HUD
 	EquippedWeapon->SetHUDAmmo();
 	UpdateCarriedAmmo();
 	PlayEquipWeaponSound(EquippedWeapon);
-
-	// Set Weapon Values for Secondary Weapon
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-	AttachActorToBackpack(SecondaryWeapon);
-
+	
 }
 
 void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip) {
@@ -443,14 +431,31 @@ void UCombatComponent::AttachActorToBackpack(AActor* ActorToAttach) {
 }
 
 void UCombatComponent::UpdateCarriedAmmo() {
-	if (EquippedWeapon == nullptr) return;
+	if (EquippedWeapon == nullptr) return;		
+
 	// Set HUD Variables
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
+		UE_LOG(LogTemp, Warning, TEXT("This only happens on server"));
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
 	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
 	if (Controller) {
+		UE_LOG(LogTemp, Warning, TEXT("This happens on server AND client"));
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+}
+
+void UCombatComponent::OnRep_CarriedAmmo() {
+	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
+	if (Controller) {
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+	// If character has a SHOTGUN, is reloading, and has no more carried shotgun ammo, stop reloading
+	if (CombatState == ECombatState::ECS_Reloading &&
+		EquippedWeapon != nullptr &&
+		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun &&
+		CarriedAmmo == 0) {
+		JumpToShotgunEnd();
 	}
 }
 

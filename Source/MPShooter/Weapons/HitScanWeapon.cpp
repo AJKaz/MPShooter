@@ -43,7 +43,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget) {
 			if (!HasAuthority() && bUseServerSideRewind) {
 				ShooterOwnerCharacter = ShooterOwnerCharacter == nullptr ? Cast<AShooterCharacter>(OwnerPawn) : ShooterOwnerCharacter;
 				ShooterOwnerController = ShooterOwnerController == nullptr ? Cast<AShooterPlayerController>(InstigatorController) : ShooterOwnerController;
-				if (ShooterOwnerController && ShooterOwnerCharacter && ShooterOwnerCharacter->GetLagCompensation()) {
+				if (ShooterOwnerController && ShooterOwnerCharacter && ShooterOwnerCharacter->GetLagCompensation() && ShooterOwnerCharacter->IsLocallyControlled()) {
 					ShooterOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
 						ShooterCharacter,
 						Start,

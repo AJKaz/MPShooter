@@ -7,6 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
+#include "MPShooter/PlayerController/ShooterPlayerController.h"
+#include "MPShooter/ShooterComponents/LagCompensationComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
 
@@ -52,19 +54,32 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets) {
 			}
 		}
 
+		TArray<AShooterCharacter*> HitCharacters;
 		// Apply damage (to each character that's hit if there r more than 1) based on amount of hits
 		for (auto HitPair : HitMap) {
-			if (HitPair.Key && HasAuthority() && InstigatorController) {
-				// Hit character, deal damage
-				UGameplayStatics::ApplyDamage(
-					HitPair.Key,				// Character that was hit
-					Damage * HitPair.Value,		// Multiplies damage by num times hit
-					InstigatorController,
-					this,
-					UDamageType::StaticClass()
-				);
+			if (HitPair.Key && InstigatorController) {
+				if (HasAuthority() && !bUseServerSideRewind) {
+					// Hit character, deal damage
+					UGameplayStatics::ApplyDamage(
+						HitPair.Key,				// Character that was hit
+						Damage * HitPair.Value,		// Multiplies damage by num times hit
+						InstigatorController,
+						this,
+						UDamageType::StaticClass()
+					);
+				}
+				HitCharacters.Add(HitPair.Key);
 			}
 		}
+
+		if (!HasAuthority() && bUseServerSideRewind) {
+			ShooterOwnerCharacter = ShooterOwnerCharacter == nullptr ? Cast<AShooterCharacter>(OwnerPawn) : ShooterOwnerCharacter;
+			ShooterOwnerController = ShooterOwnerController == nullptr ? Cast<AShooterPlayerController>(InstigatorController) : ShooterOwnerController;
+			if (ShooterOwnerController && ShooterOwnerCharacter && ShooterOwnerCharacter->GetLagCompensation() && ShooterOwnerCharacter->IsLocallyControlled()) {
+				ShooterOwnerCharacter->GetLagCompensation()->ShotgunServerScoreRequest(HitCharacters, Start, HitTargets, ShooterOwnerController->GetServerTime() - ShooterOwnerController->SingleTripTime, this);
+			}
+		}
+
 	}
 }
 
