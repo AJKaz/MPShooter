@@ -17,7 +17,24 @@ AProjectileGrenade::AProjectileGrenade() {
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->SetIsReplicated(true);
 	ProjectileMovementComponent->bShouldBounce = true;
+	ProjectileMovementComponent->InitialSpeed = InitialSpeed;
+	ProjectileMovementComponent->MaxSpeed = InitialSpeed;
 }
+
+#if WITH_EDITOR
+void AProjectileGrenade::PostEditChangeProperty(FPropertyChangedEvent& Event) {
+	Super::PostEditChangeProperty(Event);
+
+	// Changes Intial ProjectileMovementComponent's Speed and Max Speed every time I change Initial Speed in blueprints
+	FName PropertyName = Event.Property != nullptr ? Event.Property->GetFName() : NAME_None;
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AProjectileGrenade, InitialSpeed)) {
+		if (ProjectileMovementComponent) {
+			ProjectileMovementComponent->InitialSpeed = InitialSpeed;
+			ProjectileMovementComponent->MaxSpeed = InitialSpeed;
+		}
+	}
+}
+#endif
 
 void AProjectileGrenade::BeginPlay() {
 	AActor::BeginPlay();
