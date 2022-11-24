@@ -379,6 +379,12 @@ void AShooterCharacter::InteractButtonPressed() {
 	}
 }
 
+void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
+	if (Combat && OverlappingWeapon) {
+		Combat->EquipWeapon(OverlappingWeapon);
+	}
+}
+
 void AShooterCharacter::CrouchButtonPressed() {
 	if (bDisableGameplay) return;
 	Crouch();		
@@ -430,21 +436,30 @@ void AShooterCharacter::ReloadButtonPressed() {
 }
 
 void AShooterCharacter::DropButtonPressed() {	
+	if (bDisableGameplay) return;
 	if (Combat && Combat->EquippedWeapon) {
 		Combat->EquippedWeapon->Dropped();
 	}
 }
 
 void AShooterCharacter::GrenadeButtonPressed() {
+	if (bDisableGameplay) return;
 	if (Combat) {
 		Combat->ThrowGrenade();
 	}
 }
 
 void AShooterCharacter::SwapWeaponButtonPressed() {
+	if (bDisableGameplay) return;
 	if (Combat && Combat->ShouldSwapWeapons()) {
-		Combat->SwapWeapons();
+		ServerSwapWeaponButtonPressed();
 	}
+}
+
+void AShooterCharacter::ServerSwapWeaponButtonPressed_Implementation() {
+	if (Combat) {
+		Combat->SwapWeapons();
+	}	
 }
 
 float AShooterCharacter::CalculateSpeed() {
@@ -720,11 +735,6 @@ void AShooterCharacter::TurnInPlace(float DeltaTime) {
 	}
 }
 
-void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
-	if (Combat && OverlappingWeapon) {
-		Combat->EquipWeapon(OverlappingWeapon);
-	}
-}
 
 void AShooterCharacter::StartDissolve() {
 	DissolveTrack.BindDynamic(this, &AShooterCharacter::UpdateDissolveMaterial);

@@ -28,9 +28,9 @@ AWeapon::AWeapon() {
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// Set weapon's colored outline
+	EnableCustomDepth(true);
 	WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_BLUE);
 	WeaponMesh->MarkRenderStateDirty();
-	EnableCustomDepth(true);
 
 	// Detects overlaps with characters
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AreaSphere"));
@@ -59,7 +59,6 @@ void AWeapon::BeginPlay() {
 
 void AWeapon::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
-
 }
 
 void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
@@ -97,12 +96,10 @@ void AWeapon::SetHUDAmmo() {
 void AWeapon::SpendRound() {
 	Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
 	SetHUDAmmo();
-	// Server reconciliation
 	if (HasAuthority()) {
 		ClientUpdateAmmo(Ammo);
 	}
-	else if (ShooterOwnerCharacter && ShooterOwnerCharacter->IsLocallyControlled()) {
-		// On client, increment sequence
+	else {
 		++Sequence;
 	}
 }
@@ -234,11 +231,9 @@ void AWeapon::Fire(const FVector& HitTarget) {
 	}
 	if (CasingClass) {
 		// Spawn bullet casing at socket called AmmoEject
-
 		const USkeletalMeshSocket* AmmoEjectSocket = WeaponMesh->GetSocketByName(FName("AmmoEject"));
 		if (AmmoEjectSocket) {
 			FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(WeaponMesh);
-
 			// Spawn Projectile:		
 			UWorld* World = GetWorld();
 			if (World) {

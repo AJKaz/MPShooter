@@ -177,6 +177,10 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerInteractButtonPressed();
 
+
+	UFUNCTION(Server, Reliable)
+	void ServerSwapWeaponButtonPressed();
+
 	float AO_Yaw;
 	float InterpAO_Yaw;
 	float AO_Pitch;

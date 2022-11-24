@@ -23,7 +23,7 @@ UCombatComponent::UCombatComponent() {
 
 	BaseWalkSpeed = 1000.f;
 	AimWalkSpeed = 700.f;
-	SetIsReplicatedByDefault(true);
+	//SetIsReplicatedByDefault(true);
 }
 
 void UCombatComponent::BeginPlay() {
@@ -212,7 +212,7 @@ void UCombatComponent::FireShotgun() {
 bool UCombatComponent::CanFire() {
 	if (EquippedWeapon == nullptr) return false;
 	// IF character is reloading a shotgun, let them shoot after each pellet reloads (if they click)
-	if (!EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) return true;	
+	if (!EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun) return true;
 	if (bLocallyReloading) return false;
 	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }
@@ -314,22 +314,22 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 void UCombatComponent::SwapWeapons() {
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 	// Swaps primary and secondary weapon
-	AWeapon* TempWeapon = SecondaryWeapon;
-	SecondaryWeapon = EquippedWeapon;
-	EquippedWeapon = TempWeapon;
+	AWeapon* TempWeapon = EquippedWeapon;
+	EquippedWeapon = SecondaryWeapon;
+	SecondaryWeapon = TempWeapon;
 
 	// Attach primary weapon
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	AttachActorToRightHand(EquippedWeapon);
-	// Attach secondary weapon
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-	AttachActorToBackpack(SecondaryWeapon);
+	AttachActorToRightHand(EquippedWeapon);		
 	
 	// Update HUD
 	EquippedWeapon->SetHUDAmmo();
 	UpdateCarriedAmmo();
 	PlayEquipWeaponSound(EquippedWeapon);
-	
+
+	// Attach secondary weapon
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttachActorToBackpack(SecondaryWeapon);	
 }
 
 void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip) {
@@ -370,11 +370,12 @@ void UCombatComponent::OnRep_EquippedWeapon() {
 		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 
 		AttachActorToRightHand(EquippedWeapon);
-		PlayEquipWeaponSound(EquippedWeapon);
 
 		// Lock camera free rotation
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
+		
+		PlayEquipWeaponSound(EquippedWeapon);
 
 		// Update HUD Ammo
 		EquippedWeapon->SetHUDAmmo();
@@ -411,7 +412,7 @@ void UCombatComponent::AttachActorToLeftHand(AActor* ActorToAttach) {
 	if (Character == nullptr || Character->GetMesh() == nullptr || ActorToAttach == nullptr || EquippedWeapon == nullptr) return;
 	// If attaching pistol/smg to left hand, use pistol's left hand socket, else use normal left hand socket
 	bool bUsePistolSocket = EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Pistol || EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SubmachineGun;
-	FName SocketName = bUsePistolSocket ? FName("PistolSocket") : FName("LefthandSocket");
+	FName SocketName = bUsePistolSocket ? FName("PistolSocket") : FName("LeftHandSocket");
 	// Get Character's socket called "LeftHandSocket"
 	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(SocketName);
 	if (HandSocket) {
@@ -435,12 +436,12 @@ void UCombatComponent::UpdateCarriedAmmo() {
 
 	// Set HUD Variables
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
-		UE_LOG(LogTemp, Warning, TEXT("This only happens on server"));
+		UE_LOG(LogTemp, Warning, TEXT("IF Statement #1"));
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
 	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
 	if (Controller) {
-		UE_LOG(LogTemp, Warning, TEXT("This happens on server AND client"));
+		UE_LOG(LogTemp, Warning, TEXT("IF Statment #2"));
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
 }
@@ -450,11 +451,12 @@ void UCombatComponent::OnRep_CarriedAmmo() {
 	if (Controller) {
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
-	// If character has a SHOTGUN, is reloading, and has no more carried shotgun ammo, stop reloading
-	if (CombatState == ECombatState::ECS_Reloading &&
+	bool bJumpToShotgunEnd =
+		CombatState == ECombatState::ECS_Reloading &&
 		EquippedWeapon != nullptr &&
 		EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun &&
-		CarriedAmmo == 0) {
+		CarriedAmmo == 0;
+	if (bJumpToShotgunEnd) {
 		JumpToShotgunEnd();
 	}
 }
@@ -519,8 +521,7 @@ void UCombatComponent::UpdateAmmoValues() {
 	int32 ReloadAmount = AmountToReload();
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
 		// Subtract amount of ammo you're reloading from that weapon's carried ammo supply
-		// if (!bInfiniteCarriedAmmo) CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
-		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		if (!bInfiniteCarriedAmmo) CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
 	// Update HUD's carried ammo value

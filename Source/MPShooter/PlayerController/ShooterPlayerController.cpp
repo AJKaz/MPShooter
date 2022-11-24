@@ -352,9 +352,12 @@ void AShooterPlayerController::PollInit() {
 				if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
 				if (bInitializeScore) SetHUDScore(HUDScore);
 				if (bInitializeDeaths) SetHUDDeaths(HUDDeaths);
-				if (bInitializeGrenades) SetHUDGrenades(HUDGrenades);
 				if (bInitializeCarriedAmmo) SetHUDCarriedAmmo(HUDCarriedAmmo);
 				if (bInitializeWeaponAmmo) SetHUDWeaponAmmo(HUDWeaponAmmo);
+				AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(GetPawn());
+				if (ShooterCharacter && ShooterCharacter->GetCombat()) {
+					if (bInitializeGrenades) SetHUDGrenades(ShooterCharacter->GetCombat()->GetGrenades());
+				}
 			}
 		}
 	}
