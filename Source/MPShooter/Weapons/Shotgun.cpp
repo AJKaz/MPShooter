@@ -58,7 +58,8 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets) {
 		// Apply damage (to each character that's hit if there r more than 1) based on amount of hits
 		for (auto HitPair : HitMap) {
 			if (HitPair.Key && InstigatorController) {
-				if (HasAuthority() && !bUseServerSideRewind) {
+				bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+				if (HasAuthority() && bCauseAuthDamage) {
 					// Hit character, deal damage
 					UGameplayStatics::ApplyDamage(
 						HitPair.Key,				// Character that was hit

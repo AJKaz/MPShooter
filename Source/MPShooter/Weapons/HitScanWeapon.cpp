@@ -29,8 +29,10 @@ void AHitScanWeapon::Fire(const FVector& HitTarget) {
 		WeaponTraceHit(Start, HitTarget, FireHit);
 
 		AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(FireHit.GetActor());
+		// Apply damage
 		if (ShooterCharacter && InstigatorController) {
-			if (HasAuthority() && !bUseServerSideRewind) {
+			bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
+			if (HasAuthority() && bCauseAuthDamage) {
 				// Hit character, deal damage, no need for ServerSideRewind cause on server
 				UGameplayStatics::ApplyDamage(
 					ShooterCharacter,

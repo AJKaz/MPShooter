@@ -436,12 +436,10 @@ void UCombatComponent::UpdateCarriedAmmo() {
 
 	// Set HUD Variables
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType())) {
-		UE_LOG(LogTemp, Warning, TEXT("IF Statement #1"));
 		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
 	}
 	Controller = Controller == nullptr ? Cast<AShooterPlayerController>(Character->Controller) : Controller;
 	if (Controller) {
-		UE_LOG(LogTemp, Warning, TEXT("IF Statment #2"));
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
 }
