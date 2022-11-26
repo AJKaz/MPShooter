@@ -35,7 +35,7 @@ void AShooterPlayerController::Tick(float DeltaTime) {
 	SetHUDTime();
 	CheckTimeSync(DeltaTime);
 	PollInit();
-	CheckPing(DeltaTime);	
+	CheckPing(DeltaTime);
 }
 
 void AShooterPlayerController::CheckPing(float DeltaTime) {
@@ -44,10 +44,15 @@ void AShooterPlayerController::CheckPing(float DeltaTime) {
 		// Check player's ping
 		PlayerState = PlayerState == nullptr ? GetPlayerState<APlayerState>() : PlayerState;
 		if (PlayerState) {
+			UE_LOG(LogTemp, Warning, TEXT("Ping: %d"), PlayerState->GetPing() * 4);
 			// Ping is compressed and divided by 4
 			if (PlayerState->GetPing() * 4 > HighPingThreshold) {
 				HighPingWarning();
 				PingAnimationRunningTime = 0.f;
+				ServerReportPingStatus(true);
+			}
+			else {
+				ServerReportPingStatus(false);
 			}
 		}
 		HighPingRunningTime = 0.f;
@@ -59,6 +64,11 @@ void AShooterPlayerController::CheckPing(float DeltaTime) {
 			StopHighPingWarning();
 		}
 	}
+}
+
+void AShooterPlayerController::ServerReportPingStatus_Implementation(bool bHighPing) {
+	// Reports if ping is too high
+	HighPingDelegate.Broadcast(bHighPing);
 }
 
 void AShooterPlayerController::CheckTimeSync(float DeltaTime) {
@@ -260,7 +270,7 @@ void AShooterPlayerController::SetHUDGrenades(int32 Grenades) {
 
 void AShooterPlayerController::HighPingWarning() {
 	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
-	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->HighPingImage && ShooterHUD->CharacterOverlay->HighPingAnimation) {		
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->HighPingImage && ShooterHUD->CharacterOverlay->HighPingAnimation) {
 		// Show high ping image
 		ShooterHUD->CharacterOverlay->HighPingImage->SetOpacity(1.f);
 		// Play animation

@@ -150,8 +150,11 @@ protected:
 	UPROPERTY()
 	class AShooterPlayerController* ShooterOwnerController;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(Replicated, EditAnywhere)
 	bool bUseServerSideRewind = false;
+
+	UFUNCTION()
+	void OnPingTooHigh(bool bPingTooHigh);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
