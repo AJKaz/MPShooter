@@ -46,12 +46,12 @@ AShooterCharacter::AShooterCharacter() {
 	// Set camera to ignore collision with players
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
-	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);	
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
-	
+
 	// Make character independent of camera rotation (for now)
 	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;	
+	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadWidget"));
 	OverheadWidget->SetupAttachment(RootComponent);
@@ -273,7 +273,7 @@ void AShooterCharacter::PostInitializeComponents() {
 
 void AShooterCharacter::PlayFireMontage(bool bAiming) {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
-	
+
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && FireWeaponMontage) {
 		AnimInstance->Montage_Play(FireWeaponMontage);
@@ -290,30 +290,30 @@ void AShooterCharacter::PlayReloadMontage() {
 		AnimInstance->Montage_Play(ReloadMontage);
 		FName SectionName;
 		switch (Combat->EquippedWeapon->GetWeaponType()) {
-			case EWeaponType::EWT_AssaultRifle:
-				SectionName = FName("Rifle");
-				break;
-			case EWeaponType::EWT_RocketLauncher:
-				SectionName = FName("RocketLauncher");
-				break;
-			case EWeaponType::EWT_Pistol:
-				SectionName = FName("Pistol");
-				break;
-			case EWeaponType::EWT_SniperRifle:
-				SectionName = FName("SniperRifle");
-				break;
-			case EWeaponType::EWT_SubmachineGun:
-				SectionName = FName("Pistol");
-				break;
-			case EWeaponType::EWT_Shotgun:
-				SectionName = FName("Shotgun");
-				break;
-			case EWeaponType::EWT_GrenadeLauncher:
-				SectionName = FName("GrenadeLauncher");
-				break;
-			default:
-				SectionName = FName("Rifle");
-				break;
+		case EWeaponType::EWT_AssaultRifle:
+			SectionName = FName("Rifle");
+			break;
+		case EWeaponType::EWT_RocketLauncher:
+			SectionName = FName("RocketLauncher");
+			break;
+		case EWeaponType::EWT_Pistol:
+			SectionName = FName("Pistol");
+			break;
+		case EWeaponType::EWT_SniperRifle:
+			SectionName = FName("SniperRifle");
+			break;
+		case EWeaponType::EWT_SubmachineGun:
+			SectionName = FName("Pistol");
+			break;
+		case EWeaponType::EWT_Shotgun:
+			SectionName = FName("Shotgun");
+			break;
+		case EWeaponType::EWT_GrenadeLauncher:
+			SectionName = FName("GrenadeLauncher");
+			break;
+		default:
+			SectionName = FName("Rifle");
+			break;
 		}
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
@@ -322,7 +322,7 @@ void AShooterCharacter::PlayReloadMontage() {
 void AShooterCharacter::PlayElimMontage() {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && ElimMontage) {
-		AnimInstance->Montage_Play(ElimMontage);		
+		AnimInstance->Montage_Play(ElimMontage);
 	}
 }
 
@@ -341,6 +341,13 @@ void AShooterCharacter::PlayThrowGrenadeMontage() {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && ThrowGrenadeMontage) {
 		AnimInstance->Montage_Play(ThrowGrenadeMontage);
+	}
+}
+
+void AShooterCharacter::PlaySwapMontage() {
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && SwapMontage) {
+		AnimInstance->Montage_Play(SwapMontage);
 	}
 }
 
@@ -387,7 +394,7 @@ void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
 
 void AShooterCharacter::CrouchButtonPressed() {
 	if (bDisableGameplay) return;
-	Crouch();		
+	Crouch();
 }
 
 void AShooterCharacter::CrouchButtonReleased() {
@@ -409,7 +416,7 @@ void AShooterCharacter::ADSButtonReleased() {
 	}
 }
 
-void AShooterCharacter::Jump() {	
+void AShooterCharacter::Jump() {
 	if (bDisableGameplay) return;
 	Super::Jump();
 }
@@ -435,7 +442,7 @@ void AShooterCharacter::ReloadButtonPressed() {
 	}
 }
 
-void AShooterCharacter::DropButtonPressed() {	
+void AShooterCharacter::DropButtonPressed() {
 	if (bDisableGameplay) return;
 	if (Combat && Combat->EquippedWeapon) {
 		Combat->EquippedWeapon->Dropped();
@@ -451,21 +458,26 @@ void AShooterCharacter::GrenadeButtonPressed() {
 
 void AShooterCharacter::SwapWeaponButtonPressed() {
 	if (bDisableGameplay) return;
-	if (Combat && Combat->ShouldSwapWeapons()) {
+	if (Combat && Combat->ShouldSwapWeapons() && Combat->CombatState == ECombatState::ECS_Unoccupied) {
 		ServerSwapWeaponButtonPressed();
+		bFinishedSwapping = false;
+		if (!HasAuthority()) {
+			PlaySwapMontage();
+			Combat->CombatState = ECombatState::ECS_SwappingWeapons;
+		}
 	}
 }
 
 void AShooterCharacter::ServerSwapWeaponButtonPressed_Implementation() {
 	if (Combat) {
 		Combat->SwapWeapons();
-	}	
+	}
 }
 
 float AShooterCharacter::CalculateSpeed() {
 	FVector Velocity = GetVelocity();
 	Velocity.Z = 0.f;
-	return Velocity.Size();	 
+	return Velocity.Size();
 }
 
 void AShooterCharacter::AimOffset(float DeltaTime) {
@@ -509,7 +521,7 @@ void AShooterCharacter::CalculateAO_Pitch() {
 
 void AShooterCharacter::SimProxiesTurn() {
 	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
-	
+
 	bRotateRootBone = false;
 	float Speed = CalculateSpeed();
 	if (Speed > 0.f) {
@@ -567,7 +579,7 @@ void AShooterCharacter::MulticastElim_Implementation() {
 	if (ShooterPlayerController) {
 		ShooterPlayerController->SetHUDWeaponAmmo(0);
 	}
-	
+
 	bElimmed = true;
 	PlayElimMontage();
 
@@ -595,7 +607,7 @@ void AShooterCharacter::MulticastElim_Implementation() {
 	// Spawn elim bot
 	if (ElimBotEffect) {
 		FVector ElimBotSpawnPoint(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 200.f);
-		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ElimBotEffect, ElimBotSpawnPoint, GetActorRotation());		
+		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ElimBotEffect, ElimBotSpawnPoint, GetActorRotation());
 	}
 	// Spawn elim bot sound
 	if (ElimBotSound) {
@@ -603,7 +615,7 @@ void AShooterCharacter::MulticastElim_Implementation() {
 	}
 
 	// Hide Sniper scope widget (if there is one)
-	if (IsLocallyControlled() && Combat && Combat->bAiming &&  Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle) {
+	if (IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle) {
 		ShowSniperScopeWidget(false);
 	}
 }
@@ -668,7 +680,7 @@ void AShooterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 void AShooterCharacter::OnRep_Health(float LastHealth) {
 	UpdateHUDHealth();
 	// If character was damaged, play HitReactMontage
-	if(Health < LastHealth) PlayHitReactMontage();
+	if (Health < LastHealth) PlayHitReactMontage();
 }
 
 void AShooterCharacter::OnRep_Shield(float LastShield) {
@@ -717,7 +729,7 @@ void AShooterCharacter::OnRep_ReplicatedMovement() {
 
 }
 
-void AShooterCharacter::TurnInPlace(float DeltaTime) {	
+void AShooterCharacter::TurnInPlace(float DeltaTime) {
 	if (AO_Yaw > 55.f) {
 		TurningInPlace = ETurningInPlace::ETIP_Right;
 	}
@@ -754,12 +766,12 @@ void AShooterCharacter::SetOverlappingWeapon(AWeapon* Weapon) {
 	if (OverlappingWeapon) {
 		OverlappingWeapon->ShowPickupWidget(false);
 	}
-	
+
 	OverlappingWeapon = Weapon;
 
 	// True if called on character being controlled by host
 	if (IsLocallyControlled() && OverlappingWeapon) {
-		OverlappingWeapon->ShowPickupWidget(true);		
+		OverlappingWeapon->ShowPickupWidget(true);
 	}
 }
 
@@ -806,13 +818,13 @@ void AShooterCharacter::HideCameraIfCharacterClose() {
 			if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh()) {
 				Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 			}
-		}		
-		
+		}
+
 	}
 }
 
 void AShooterCharacter::ShowLocalMesh(bool bShow) {
-	GetMesh()->SetVisibility(bShow);	
+	GetMesh()->SetVisibility(bShow);
 }
 
 ECombatState AShooterCharacter::GetCombatState() const {
