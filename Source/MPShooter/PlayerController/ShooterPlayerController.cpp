@@ -15,6 +15,7 @@
 #include "MPShooter/GameState/ShooterGameState.h"
 #include "MPShooter/PlayerState/ShooterPlayerState.h"
 #include "Components/Image.h"
+#include "MPShooter/HUD/ReturnToMenu.h"
 
 void AShooterPlayerController::BeginPlay() {
 	Super::BeginPlay();
@@ -22,6 +23,13 @@ void AShooterPlayerController::BeginPlay() {
 	ShooterHUD = Cast<AShooterHUD>(GetHUD());
 	ServerCheckMatchState();
 }
+
+void AShooterPlayerController::SetupInputComponent() {
+	Super::SetupInputComponent();
+	if (InputComponent == nullptr) return;
+	InputComponent->BindAction("Quit", IE_Pressed, this, &AShooterPlayerController::ShowReturnToMenu);
+}
+
 
 void AShooterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -36,6 +44,22 @@ void AShooterPlayerController::Tick(float DeltaTime) {
 	CheckTimeSync(DeltaTime);
 	PollInit();
 	CheckPing(DeltaTime);
+}
+
+void AShooterPlayerController::ShowReturnToMenu() {
+	if (ReturnToMenuWidget == nullptr) return;
+	if (ReturnToMenu == nullptr) {
+		ReturnToMenu = CreateWidget<UReturnToMenu>(this, ReturnToMenuWidget);
+	}
+	if (ReturnToMenu) {
+		bReturnToMenuOpen = !bReturnToMenuOpen;
+		if (bReturnToMenuOpen) {
+			ReturnToMenu->MenuSetup();
+		}
+		else {
+			ReturnToMenu->MenuTearDown();
+		}
+	}
 }
 
 void AShooterPlayerController::CheckPing(float DeltaTime) {
@@ -65,6 +89,8 @@ void AShooterPlayerController::CheckPing(float DeltaTime) {
 		}
 	}
 }
+
+
 
 void AShooterPlayerController::ServerReportPingStatus_Implementation(bool bHighPing) {
 	// Reports if ping is too high

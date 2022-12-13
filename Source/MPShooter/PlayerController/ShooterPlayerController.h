@@ -49,6 +49,7 @@ public:
 	FHighPingDelegate HighPingDelegate;
 
 protected:
+	virtual void SetupInputComponent() override;
 
 	virtual void BeginPlay() override;
 	void SetHUDTime();
@@ -86,7 +87,24 @@ protected:
 	void StopHighPingWarning();
 	void CheckPing(float DeltaTime);
 
+	// Action Bindings for Menu/Quit
+	void ShowReturnToMenu();
+	
+
 private:
+
+	/**
+	* Return to menu
+	*/
+	UPROPERTY(EditAnywhere, Category = HUD)
+	TSubclassOf<class UUserWidget> ReturnToMenuWidget;
+
+	UPROPERTY()
+	class UReturnToMenu* ReturnToMenu;
+
+	bool bReturnToMenuOpen = false;
+
+
 	UPROPERTY()
 	class AShooterHUD* ShooterHUD;
 
