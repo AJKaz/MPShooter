@@ -80,7 +80,7 @@ void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, ASh
 	}
 
 	if (ElimmedCharacter) {
-		ElimmedCharacter->Elim();
+		ElimmedCharacter->Elim(false);
 	}
 }
 
@@ -98,7 +98,7 @@ void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, ASh
 
 	// Kill player
 	if (ElimmedCharacter) {
-		ElimmedCharacter->Elim();
+		ElimmedCharacter->Elim(false);
 	}
 
 }
@@ -116,6 +116,18 @@ void AShooterGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController*
 		// Generate random spawn point
 		int32 Selection = FMath::RandRange(0, PlayerSpawns.Num() - 1);
 		RestartPlayerAtPlayerStart(ElimmedController, PlayerSpawns[Selection]);
+	}
+}
+
+void AShooterGameMode::PlayerLeftGame(class AShooterPlayerState* PlayerLeaving) {
+	if (PlayerLeaving == nullptr) return;
+	AShooterGameState* ShooterGameState = GetGameState<AShooterGameState>();
+	if (ShooterGameState && ShooterGameState->TopScoringPlayers.Contains(PlayerLeaving)) {
+		ShooterGameState->TopScoringPlayers.Remove(PlayerLeaving);
+	}
+	AShooterCharacter* CharacterLeaving = Cast<AShooterCharacter>(PlayerLeaving->GetPawn());
+	if (CharacterLeaving) {
+		CharacterLeaving->Elim(true);
 	}
 }
 

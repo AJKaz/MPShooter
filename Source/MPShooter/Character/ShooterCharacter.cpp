@@ -569,13 +569,13 @@ void AShooterCharacter::DropOrDestroyWeapons() {
 	}
 }
 
-void AShooterCharacter::Elim() {
+void AShooterCharacter::Elim(bool bPLayerLeftGame) {
 	DropOrDestroyWeapons();
-	MulticastElim();
-	GetWorldTimerManager().SetTimer(ElimTimer, this, &AShooterCharacter::ElimTimerFinished, ElimDelay);
+	MulticastElim(bPLayerLeftGame);
 }
 
-void AShooterCharacter::MulticastElim_Implementation() {
+void AShooterCharacter::MulticastElim_Implementation(bool bPLayerLeftGame) {
+	bLeftGame = bPLayerLeftGame;
 	if (ShooterPlayerController) {
 		ShooterPlayerController->SetHUDWeaponAmmo(0);
 	}
@@ -618,13 +618,27 @@ void AShooterCharacter::MulticastElim_Implementation() {
 	if (IsLocallyControlled() && Combat && Combat->bAiming && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle) {
 		ShowSniperScopeWidget(false);
 	}
+
+	GetWorldTimerManager().SetTimer(ElimTimer, this, &AShooterCharacter::ElimTimerFinished, ElimDelay);
 }
 
 void AShooterCharacter::ElimTimerFinished() {
 	// Respawn Character after elim timer is finished
 	AShooterGameMode* ShooterGameMode = GetWorld()->GetAuthGameMode<AShooterGameMode>();
-	if (ShooterGameMode) {
+	if (ShooterGameMode && !bLeftGame) {
 		ShooterGameMode->RequestRespawn(this, Controller);
+	}
+	if (bLeftGame && IsLocallyControlled()) {
+		// left game, broadcast delegate to disconnect
+		OnLeftGame.Broadcast();
+	}
+}
+
+void AShooterCharacter::ServerLeaveGame_Implementation() {
+	AShooterGameMode* ShooterGameMode = GetWorld()->GetAuthGameMode<AShooterGameMode>();
+	ShooterPlayerState = ShooterPlayerState == nullptr ? GetPlayerState<AShooterPlayerState>() : ShooterPlayerState;
+	if (ShooterGameMode && ShooterPlayerState) {
+		ShooterGameMode->PlayerLeftGame(ShooterPlayerState);
 	}
 }
 

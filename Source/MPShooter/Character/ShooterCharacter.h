@@ -10,6 +10,8 @@
 #include "MPShooter/ShooterTypes/CombatState.h"
 #include "ShooterCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
+
 UCLASS()
 class MPSHOOTER_API AShooterCharacter : public ACharacter, public IInteractWithCrosshairsInterface
 {
@@ -34,9 +36,9 @@ public:
 	void PlaySwapMontage();
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastElim();
+	void MulticastElim(bool bPLayerLeftGame);
 	/** Called only on server */
-	void Elim();
+	void Elim(bool bPLayerLeftGame);
 
 	virtual void Destroyed() override;
 
@@ -62,6 +64,11 @@ public:
 	TMap<FName, class UBoxComponent*> HitCollisionBoxes;
 
 	bool bFinishedSwapping = false;
+
+	UFUNCTION(Server, Reliable)
+	void ServerLeaveGame();
+
+	FOnLeftGame OnLeftGame;
 
 protected:	
 	virtual void BeginPlay() override;	
@@ -267,6 +274,10 @@ private:
 	float ElimDelay = 3.f;
 	
 	void ElimTimerFinished();
+
+	bool bLeftGame = false;
+
+
 
 	/**
 	* Elim bot

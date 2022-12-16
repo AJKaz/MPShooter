@@ -6,6 +6,7 @@
 #include "Components/Button.h"
 #include "MultiplayerSessionsSubsystem.h"
 #include "GameFramework/GameModeBase.h"
+#include "MPShooter/Character/ShooterCharacter.h"
 
 void UReturnToMenu::MenuSetup() {
 	// Show Widget
@@ -71,9 +72,21 @@ void UReturnToMenu::MenuTearDown() {
 
 void UReturnToMenu::MenuButtonClicked() {
 	MenuButton->SetIsEnabled(false);
-	if (MultiplayerSessionsSubsystem) {
-		MultiplayerSessionsSubsystem->DestroySession();
-	}
+
+	UWorld* World = GetWorld();
+	if (World) {
+		APlayerController* FirstPlayerController = World->GetFirstPlayerController();
+		if (FirstPlayerController) {
+			AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(FirstPlayerController->GetPawn());
+			if (ShooterCharacter) {
+				ShooterCharacter->ServerLeaveGame();
+				ShooterCharacter->OnLeftGame.AddDynamic(this, &UReturnToMenu::OnPlayerLeftGame);
+			}
+			else {
+				MenuButton->SetIsEnabled(true);				
+			}
+		}
+	}	
 }
 
 void UReturnToMenu::OnDestroySession(bool bWasSuccessful) {
@@ -96,5 +109,11 @@ void UReturnToMenu::OnDestroySession(bool bWasSuccessful) {
 				PlayerController->ClientReturnToMainMenuWithTextReason(FText());
 			}
 		}
+	}
+}
+
+void UReturnToMenu::OnPlayerLeftGame() {
+	if (MultiplayerSessionsSubsystem) {
+		MultiplayerSessionsSubsystem->DestroySession();
 	}
 }

@@ -28,6 +28,8 @@ public:
 	
 	virtual void RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController);
 
+	void PlayerLeftGame(class AShooterPlayerState* PlayerLeaving);
+
 	/**
 	* Game times
 	*/
