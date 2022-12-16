@@ -70,6 +70,12 @@ public:
 
 	FOnLeftGame OnLeftGame;
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastGainedTheLead();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastLostTheLead();
+
 protected:	
 	virtual void BeginPlay() override;	
 
@@ -280,7 +286,7 @@ private:
 
 
 	/**
-	* Elim bot
+	* Elim effects
 	*/
 
 	UPROPERTY(EditAnywhere)
@@ -291,6 +297,12 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ElimBotSound;
+
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* CrownSystem;
+
+	UPROPERTY(EditAnywhere)
+	class UNiagaraComponent* CrownComponent;
 
 	/**
 	* Dissolve Effect

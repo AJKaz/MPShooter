@@ -259,12 +259,12 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
 		);
 		if (ConfirmHitResult.bBlockingHit) {	// we hit the head, return early
 			// Draw debug for blocking hit
-			if (ConfirmHitResult.Component.IsValid()) {
+			/*if (ConfirmHitResult.Component.IsValid()) {
 				UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
 				if (Box) {
 					DrawDebugBox(World, Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Red, false, 8.f);
 				}
-			}
+			}*/
 
 			ResetHitBoxes(HitCharacter, CurrentFrame);
 			EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
@@ -285,12 +285,12 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(const FFramePackag
 			);
 			if (ConfirmHitResult.bBlockingHit) {
 				// Draw debug for blocking hit
-				if (ConfirmHitResult.Component.IsValid()) {
+				/*if (ConfirmHitResult.Component.IsValid()) {
 					UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
 					if (Box) {
 						DrawDebugBox(World, Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 8.f);
 					}
-				}
+				}*/
 				ResetHitBoxes(HitCharacter, CurrentFrame);
 				EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 				return FServerSideRewindResult{ true, false };
@@ -336,12 +336,12 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 	UWorld* World = GetWorld();
 	if (PathResult.HitResult.bBlockingHit) {
 		// Hit head, return early
-		if (PathResult.HitResult.Component.IsValid()) {
+		/*if (PathResult.HitResult.Component.IsValid()) {
 			UBoxComponent* Box = Cast<UBoxComponent>(PathResult.HitResult.Component);
 			if (Box && World) {
 				DrawDebugBox(World, Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Red, false, 8.f);
 			}
-		}
+		}*/
 
 		ResetHitBoxes(HitCharacter, CurrentFrame);
 		EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
@@ -360,12 +360,12 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(const FF
 		UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
 		if (PathResult.HitResult.bBlockingHit) {
 			// Draw debug for blocking hit
-			if (PathResult.HitResult.Component.IsValid()) {
+			/*if (PathResult.HitResult.Component.IsValid()) {
 				UBoxComponent* Box = Cast<UBoxComponent>(PathResult.HitResult.Component);
 				if (Box && World) {
 					DrawDebugBox(World, Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 8.f);
 				}
-			}
+			}*/
 			ResetHitBoxes(HitCharacter, CurrentFrame);
 			EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
 			return FServerSideRewindResult{ true, false };
@@ -418,12 +418,12 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(cons
 			AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(ConfirmHitResult.GetActor());
 			if (ShooterCharacter) {
 				// Draw debug for blocking hit
-				if (ConfirmHitResult.Component.IsValid()) {
+				/*if (ConfirmHitResult.Component.IsValid()) {
 					UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
 					if (Box) {
 						DrawDebugBox(World, Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 8.f);
 					}
-				}
+				}*/
 				// Got a valid hit (and it's a headshot)
 				// Add headshot count to that character in the TMap
 				if (ShotgunResult.HeadShots.Contains(ShooterCharacter)) {
@@ -466,12 +466,12 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(cons
 			AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(ConfirmHitResult.GetActor());
 			if (ShooterCharacter) {
 				// Draw debug for blocking hit
-				if (ConfirmHitResult.Component.IsValid()) {
+				/*if (ConfirmHitResult.Component.IsValid()) {
 					UBoxComponent* Box = Cast<UBoxComponent>(ConfirmHitResult.Component);
 					if (Box) {
 						DrawDebugBox(World, Box->GetComponentLocation(), Box->GetScaledBoxExtent(), FQuat(Box->GetComponentRotation()), FColor::Blue, false, 8.f);
 					}
-				}
+				}*/
 				// Got a valid body shot, add bodyshot count to that character in the TMap
 				if (ShotgunResult.BodyShots.Contains(ShooterCharacter)) {
 					ShotgunResult.BodyShots[ShooterCharacter]++;

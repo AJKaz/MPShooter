@@ -67,8 +67,30 @@ void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, ASh
 
 	// Add kills to kill counter
 	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && ShooterGameState) {
+		TArray<AShooterPlayerState*> PlayersCurrentlyInLead;
+		for (auto LeadPlayer : ShooterGameState->TopScoringPlayers) {
+			PlayersCurrentlyInLead.Add(LeadPlayer);
+		}
 		AttackerPlayerState->AddToScore(1.f);
 		ShooterGameState->UpdateTopScore(AttackerPlayerState);
+
+		if (ShooterGameState->TopScoringPlayers.Contains(AttackerPlayerState)) {
+			// attacker player is top player, give them crown
+			AShooterCharacter* Leader = Cast<AShooterCharacter>(AttackerPlayerState->GetPawn());
+			if (Leader) {
+				Leader->MulticastGainedTheLead();
+			}
+		}
+
+		for (int32 i = 0; i < PlayersCurrentlyInLead.Num(); i++) {
+			if (!ShooterGameState->TopScoringPlayers.Contains(PlayersCurrentlyInLead[i])) {
+				// no longer a top player, remove their crown
+				AShooterCharacter* Loser = Cast<AShooterCharacter>(PlayersCurrentlyInLead[i]->GetPawn());
+				if (Loser) {
+					Loser->MulticastLostTheLead();
+				}
+			}
+		}
 	}
 	if (VictimPlayerState) {
 		VictimPlayerState->AddToDeaths(1);

@@ -68,7 +68,7 @@ void AShooterPlayerController::CheckPing(float DeltaTime) {
 		// Check player's ping
 		PlayerState = PlayerState == nullptr ? GetPlayerState<APlayerState>() : PlayerState;
 		if (PlayerState) {
-			UE_LOG(LogTemp, Warning, TEXT("Ping: %d"), PlayerState->GetPing() * 4);
+			//UE_LOG(LogTemp, Warning, TEXT("Ping: %d"), PlayerState->GetPing() * 4);
 			// Ping is compressed and divided by 4
 			if (PlayerState->GetPing() * 4 > HighPingThreshold) {
 				HighPingWarning();

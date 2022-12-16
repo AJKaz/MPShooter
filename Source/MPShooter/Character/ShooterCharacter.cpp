@@ -24,6 +24,10 @@
 #include "MPShooter/ShooterComponents/BuffComponent.h"
 #include "Components/BoxComponent.h"
 #include "MPShooter/ShooterComponents/LagCompensationComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "MPShooter/GameState/ShooterGameState.h"
+
 
 AShooterCharacter::AShooterCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -176,6 +180,32 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AShooterCharacter, bDisableGameplay);
 }
 
+void AShooterCharacter::MulticastGainedTheLead_Implementation() {
+	if (CrownSystem == nullptr) return;
+	if (CrownComponent == nullptr) {
+		// spawn crown component
+		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			CrownSystem,
+			GetCapsuleComponent(),
+			FName(),
+			GetActorLocation() + FVector(0.f, 0.f, 110.f),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false);
+	}
+	if (CrownComponent) {
+		// activate crown component
+		CrownComponent->Activate();
+	}
+}
+
+void AShooterCharacter::MulticastLostTheLead_Implementation() {
+	// Destroy crown
+	if (CrownComponent) {
+		CrownComponent->DestroyComponent();
+	}
+}
+
 void AShooterCharacter::BeginPlay() {
 	Super::BeginPlay();
 
@@ -194,7 +224,7 @@ void AShooterCharacter::BeginPlay() {
 	}
 	if (AttachedGrenade) {
 		AttachedGrenade->SetVisibility(false);
-	}
+	}	
 }
 
 void AShooterCharacter::Tick(float DeltaTime) {
@@ -619,6 +649,11 @@ void AShooterCharacter::MulticastElim_Implementation(bool bPLayerLeftGame) {
 		ShowSniperScopeWidget(false);
 	}
 
+	// remove crown (if player has it)
+	if (CrownComponent) {
+		CrownComponent->DestroyComponent();
+	}
+
 	GetWorldTimerManager().SetTimer(ElimTimer, this, &AShooterCharacter::ElimTimerFinished, ElimDelay);
 }
 
@@ -732,6 +767,10 @@ void AShooterCharacter::PollInit() {
 		if (ShooterPlayerState) {
 			ShooterPlayerState->AddToScore(0.f);
 			ShooterPlayerState->AddToDeaths(0);
+			AShooterGameState* ShooterGameState = Cast<AShooterGameState>(UGameplayStatics::GetGameState(this));
+			if (ShooterGameState && ShooterGameState->TopScoringPlayers.Contains(ShooterPlayerState)) {
+				MulticastGainedTheLead();
+			}
 		}
 	}
 }
