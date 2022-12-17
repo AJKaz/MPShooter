@@ -91,7 +91,6 @@ void AShooterPlayerController::CheckPing(float DeltaTime) {
 }
 
 
-
 void AShooterPlayerController::ServerReportPingStatus_Implementation(bool bHighPing) {
 	// Reports if ping is too high
 	HighPingDelegate.Broadcast(bHighPing);
@@ -119,6 +118,41 @@ void AShooterPlayerController::ServerCheckMatchState_Implementation() {
 
 		if (ShooterHUD && MatchState == MatchState::WaitingToStart) {
 			ShooterHUD->AddAnnouncement();
+		}
+	}
+}
+
+void AShooterPlayerController::BroadcastElim(APlayerState* Attacker, APlayerState* Victim) {
+	ClientElimAnnouncement(Attacker, Victim);
+}
+
+void AShooterPlayerController::ClientElimAnnouncement_Implementation(APlayerState* Attacker, APlayerState* Victim) {
+	APlayerState* Self = GetPlayerState<APlayerState>();
+	if (Attacker && Victim && Self) {
+		ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+		if (ShooterHUD) {
+			if (Attacker == Self && Victim != Self) {
+				// You killed someone and it's not a suicide
+				ShooterHUD->AddElimAnnouncement("You", Victim->GetPlayerName());
+				return;
+			}
+			if (Victim == Self && Attacker != Self) {
+				// someone else killed you
+				ShooterHUD->AddElimAnnouncement(Attacker->GetPlayerName(), "You");
+				return;
+			}
+			if (Attacker == Victim && Attacker == Self) {
+				// killed yourself
+				ShooterHUD->AddElimAnnouncement("You", "Yourself");
+				return;
+			}
+			if (Attacker == Victim && Attacker != Self) {
+				// someone else killed themselves
+				ShooterHUD->AddElimAnnouncement(Attacker->GetPlayerName(), "Themself");
+				return;
+			}
+			// someone killed someone else 
+			ShooterHUD->AddElimAnnouncement(Attacker->GetPlayerName(), Victim->GetPlayerName());
 		}
 	}
 }

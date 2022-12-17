@@ -5,6 +5,10 @@
 #include "GameFramework/PlayerController.h"
 #include "CharacterOverlay.h"
 #include "Announcement.h"
+#include "ElimAnnouncement.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Components/HorizontalBox.h"
+#include "Components/CanvasPanelSlot.h"
 
 void AShooterHUD::BeginPlay() {
 	Super::BeginPlay();
@@ -62,6 +66,44 @@ void AShooterHUD::AddAnnouncement() {
 	}
 }
 
+void AShooterHUD::AddElimAnnouncement(FString Attacker, FString Victim) {
+	OwningPlayer = OwningPlayer == nullptr ? GetOwningPlayerController() : OwningPlayer;
+	if (OwningPlayer && ElimAnnouncementClass) {
+		// Create & add elim announcement
+		UElimAnnouncement* ElimAnnouncementWidget = CreateWidget<UElimAnnouncement>(OwningPlayer, ElimAnnouncementClass);
+		if (ElimAnnouncementWidget) {
+			ElimAnnouncementWidget->SetElimAnnouncementText(Attacker, Victim);
+			ElimAnnouncementWidget->AddToViewport();
+
+			// move old kill messages up
+			for (UElimAnnouncement* Msg : ElimMessages) {
+				if (Msg && Msg->AnnouncementBox) {
+					UCanvasPanelSlot* CanvasSlot = UWidgetLayoutLibrary::SlotAsCanvasSlot(Msg->AnnouncementBox);
+					if (CanvasSlot) {						
+						FVector2D NewPosition(CanvasSlot->GetPosition().X, CanvasSlot->GetPosition().Y - CanvasSlot->GetSize().Y);
+						CanvasSlot->SetPosition(NewPosition);
+					}
+				}
+			}
+			ElimMessages.Add(ElimAnnouncementWidget);
+			//UE_LOG(LogTemp, Warning, TEXT("%d"), ElimMessages.Num());
+			
+			// setup timer
+			FTimerHandle ElimMsgTimer;
+			FTimerDelegate ElimMsgDelegate;
+			ElimMsgDelegate.BindUFunction(this, FName("ElimAnnouncementTimerFinished"), ElimAnnouncementWidget);
+			GetWorldTimerManager().SetTimer(ElimMsgTimer, ElimMsgDelegate, ElimAnnouncementTime, false);
+		}
+	}
+}
+
+void AShooterHUD::ElimAnnouncementTimerFinished(UElimAnnouncement* MsgToRemove) {
+	if (MsgToRemove) {
+		ElimMessages.RemoveAt(ElimMessages.Num() - 1);
+		MsgToRemove->RemoveFromParent();
+	}
+}
+
 void AShooterHUD::DrawCrosshair(UTexture2D* Texture, FVector2D Center, FVector2D Spread, FLinearColor CrosshairColor) {
 	const float TextureWidth = Texture->GetSizeX();
 	const float TextureHeight = Texture->GetSizeY();
@@ -80,3 +122,5 @@ void AShooterHUD::DrawCrosshair(UTexture2D* Texture, FVector2D Center, FVector2D
 	);
 
 }
+
+

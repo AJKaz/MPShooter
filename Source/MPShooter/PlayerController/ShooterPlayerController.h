@@ -48,6 +48,9 @@ public:
 
 	FHighPingDelegate HighPingDelegate;
 
+	// called on elim
+	void BroadcastElim(APlayerState* Attacker, APlayerState* Victim);
+
 protected:
 	virtual void SetupInputComponent() override;
 
@@ -90,6 +93,8 @@ protected:
 	// Action Bindings for Menu/Quit
 	void ShowReturnToMenu();
 	
+	UFUNCTION(Client, Reliable)
+	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
 
 private:
 

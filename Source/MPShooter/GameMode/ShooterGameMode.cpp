@@ -66,7 +66,7 @@ void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, ASh
 	AShooterGameState* ShooterGameState = GetGameState<AShooterGameState>();
 
 	// Add kills to kill counter
-	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && ShooterGameState) {
+	if (AttackerPlayerState && VictimPlayerState && AttackerPlayerState != VictimPlayerState && ShooterGameState) {
 		TArray<AShooterPlayerState*> PlayersCurrentlyInLead;
 		for (auto LeadPlayer : ShooterGameState->TopScoringPlayers) {
 			PlayersCurrentlyInLead.Add(LeadPlayer);
@@ -103,6 +103,13 @@ void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, ASh
 
 	if (ElimmedCharacter) {
 		ElimmedCharacter->Elim(false);
+	}
+	// broadcast elim message
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It) {
+		AShooterPlayerController* ShooterPlayer = Cast<AShooterPlayerController>(*It);
+		if (ShooterPlayer && AttackerPlayerState && VictimPlayerState) {
+			ShooterPlayer->BroadcastElim(AttackerPlayerState, VictimPlayerState);
+		}
 	}
 }
 
