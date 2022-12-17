@@ -33,10 +33,13 @@ void AHitScanWeapon::Fire(const FVector& HitTarget) {
 		if (ShooterCharacter && InstigatorController) {
 			bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
 			if (HasAuthority() && bCauseAuthDamage) {
+				// Check if hit headshot
+				const float DamageToApply = FireHit.BoneName.ToString() == FString("head") ? HeadshotDamage : Damage;
+
 				// Hit character, deal damage, no need for ServerSideRewind cause on server
 				UGameplayStatics::ApplyDamage(
 					ShooterCharacter,
-					Damage,
+					DamageToApply,
 					InstigatorController,
 					this,
 					UDamageType::StaticClass()
@@ -86,6 +89,9 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& Hi
 		FVector BeamEnd = End;
 		if (OutHit.bBlockingHit) {
 			BeamEnd = OutHit.ImpactPoint;						
+		}
+		else {
+			OutHit.ImpactPoint = End;
 		}
 
 		// Draw debug sphere for each shot

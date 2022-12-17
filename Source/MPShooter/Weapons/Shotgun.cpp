@@ -28,6 +28,7 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets) {
 	
 		// Maps hit character to num of times hit
 		TMap<AShooterCharacter*, uint32> HitMap;
+		TMap<AShooterCharacter*, uint32> HeadshotHitMap;
 		
 		for (FVector_NetQuantize HitTarget : HitTargets) {
 			FHitResult FireHit;
@@ -36,13 +37,18 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets) {
 			AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(FireHit.GetActor());
 			if (ShooterCharacter) {
 				// If pellet hit an enemy, increment the counter for the times it's hit that enemy
-				// If enemy hasn't been previously hit, add them to map and set hit count to 1
-				if (HitMap.Contains(ShooterCharacter)) {
-					HitMap[ShooterCharacter]++;
+				// If enemy hasn't been previously hit, add them to map and set hit count to 1				
+				if (FireHit.BoneName.ToString() == FString("head")) {
+					// add to headshot map
+					if (HeadshotHitMap.Contains(ShooterCharacter)) HeadshotHitMap[ShooterCharacter]++;
+					else HeadshotHitMap.Emplace(ShooterCharacter, 1);
 				}
 				else {
-					HitMap.Emplace(ShooterCharacter, 1);
+					// add to bodyshot map
+					if (HitMap.Contains(ShooterCharacter)) HitMap[ShooterCharacter]++;
+					else HitMap.Emplace(ShooterCharacter, 1);
 				}
+								
 				// Spawn impact particles
 				if (ImpactParticles) {
 					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactParticles, FireHit.ImpactPoint, FireHit.ImpactNormal.Rotation());
@@ -55,21 +61,36 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets) {
 		}
 
 		TArray<AShooterCharacter*> HitCharacters;
-		// Apply damage (to each character that's hit if there r more than 1) based on amount of hits
+		TMap<AShooterCharacter*, float> DamageMap;
+		// Add up total body shot damage to apply
 		for (auto HitPair : HitMap) {
-			if (HitPair.Key && InstigatorController) {
+			if (HitPair.Key) {
+				DamageMap.Emplace(HitPair.Key, HitPair.Value * Damage);
+				HitCharacters.AddUnique(HitPair.Key);
+			}
+		}
+		// Add up total headshot damage to apply
+		for (auto HeadshotHitPair : HeadshotHitMap) {
+			if (HeadshotHitPair.Key) {
+				if (DamageMap.Contains(HeadshotHitPair.Key)) DamageMap[HeadshotHitPair.Key]+= HeadshotHitPair.Value * HeadshotDamage;
+				else DamageMap.Emplace(HeadshotHitPair.Key, HeadshotHitPair.Value * HeadshotDamage);
+				HitCharacters.AddUnique(HeadshotHitPair.Key);
+			}
+		}
+
+		for (auto DamagePair : DamageMap) {
+			if (DamagePair.Key && InstigatorController) {
 				bool bCauseAuthDamage = !bUseServerSideRewind || OwnerPawn->IsLocallyControlled();
 				if (HasAuthority() && bCauseAuthDamage) {
 					// Hit character, deal damage
 					UGameplayStatics::ApplyDamage(
-						HitPair.Key,				// Character that was hit
-						Damage * HitPair.Value,		// Multiplies damage by num times hit
+						DamagePair.Key,				// Character that was hit
+						DamagePair.Value,			// Damage calculated from above
 						InstigatorController,
 						this,
 						UDamageType::StaticClass()
 					);
 				}
-				HitCharacters.Add(HitPair.Key);
 			}
 		}
 

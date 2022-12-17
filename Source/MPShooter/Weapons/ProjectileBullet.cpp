@@ -62,8 +62,10 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 		AShooterPlayerController* OwnerController = Cast<AShooterPlayerController>(OwnerCharacter->Controller);
 		if (OwnerController) {
 			if (OwnerCharacter->HasAuthority() && !bUseServerSideRewind) {
+				const float DamageToApply = Hit.BoneName.ToString() == FString("head") ? HeadshotDamage : Damage;
+
 				// on server, no ssr, apply damage
-				UGameplayStatics::ApplyDamage(OtherActor, Damage, OwnerController, this, UDamageType::StaticClass());
+				UGameplayStatics::ApplyDamage(OtherActor, DamageToApply, OwnerController, this, UDamageType::StaticClass());
 				Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
 				return;
 			}

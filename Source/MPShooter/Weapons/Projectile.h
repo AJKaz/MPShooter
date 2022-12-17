@@ -26,7 +26,13 @@ public:
 	UPROPERTY(EditAnywhere)
 	float InitialSpeed = 20000.f;
 
-	float Damage = 20.f;
+	// Only set this for Grenades and Rockets
+	UPROPERTY(EditAnywhere)
+	float Damage = 20.f;	
+
+	// Doesn't matter for Grenades and Rockets
+	UPROPERTY(EditAnywhere)
+	float HeadshotDamage = 40.f;
 
 protected:
 	virtual void BeginPlay() override;
