@@ -97,16 +97,16 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(AShooterCharac
 	}
 }
 
-void ULagCompensationComponent::ProjectileScoreRequest_Implementation(AShooterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime) {
+void ULagCompensationComponent::ProjectileScoreRequest_Implementation(AShooterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime, AWeapon* DamageCauser) {
 	FServerSideRewindResult Confirm = ProjectileServerSideRewind(HitCharacter, TraceStart, InitialVelocity, HitTime);
 	// Got a hit, apply damage
-	if (Character && HitCharacter && Character->GetEquippedWeapon() && Confirm.bHitConfirmed) {
-		const float Damage = Confirm.bHeadshot ? Character->GetEquippedWeapon()->GetHeadshotDamage() : Character->GetEquippedWeapon()->GetDamage();
+	if (Character && HitCharacter && DamageCauser && Confirm.bHitConfirmed) {
+		const float Damage = Confirm.bHeadshot ? DamageCauser->GetHeadshotDamage() : DamageCauser->GetDamage();
 		UGameplayStatics::ApplyDamage(
 			HitCharacter,
 			Damage,
 			Character->Controller,
-			Character->GetEquippedWeapon(),
+			DamageCauser,
 			UDamageType::StaticClass()
 		);
 	}

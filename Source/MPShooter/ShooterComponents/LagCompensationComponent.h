@@ -88,7 +88,7 @@ public:
 	void ServerScoreRequest(AShooterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize& HitLocation, float HitTime, class AWeapon* DamageCauser);
 	
 	UFUNCTION(Server, Reliable)
-	void ProjectileScoreRequest(AShooterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime);
+	void ProjectileScoreRequest(AShooterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart, const FVector_NetQuantize100& InitialVelocity, float HitTime, AWeapon* DamageCauser);
 
 	UFUNCTION(Server, Reliable)
 	void ShotgunServerScoreRequest(const TArray<AShooterCharacter*>& HitCharacters, const FVector_NetQuantize& TraceStart, const TArray<FVector_NetQuantize>& HitLocations, float HitTime, AWeapon* DamageCauser);
