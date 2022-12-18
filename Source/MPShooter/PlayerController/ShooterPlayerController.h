@@ -40,8 +40,8 @@ public:
 	// Sync with server clock as soon as possible
 	virtual void ReceivedPlayer() override;
 
-	void OnMatchStateSet(FName State);
-	void HandleMatchHasStarted();
+	void OnMatchStateSet(FName State, bool bTeamsMatch = false);
+	void HandleMatchHasStarted(bool bTeamsMatch = false);
 	void HandleCooldown();
 
 	float SingleTripTime = 0.f;
@@ -50,6 +50,14 @@ public:
 
 	// called on elim
 	void BroadcastElim(APlayerState* Attacker, APlayerState* Victim);
+
+	/**
+	* Scores
+	*/
+	void HideTeamScores();
+	void InitTeamScores();
+	void SetHUDRedTeamScore(int32 RedScore);
+	void SetHUDBlueTeamScore(int32 BlueScore);
 
 protected:
 	virtual void SetupInputComponent() override;
@@ -95,6 +103,12 @@ protected:
 	
 	UFUNCTION(Client, Reliable)
 	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
+
+	UPROPERTY(ReplicatedUsing = OnRep_ShowTeamScores)
+	bool bShowTeamScores = false;
+
+	UFUNCTION()
+	void OnRep_ShowTeamScores();
 
 private:
 
@@ -162,7 +176,7 @@ private:
 	bool bInitializeWeaponAmmo = false;
 
 	/**
-	* High Ping Warning
+	* Ping
 	*/
 	float HighPingRunningTime = 0.f;
 	UPROPERTY(EditAnywhere)
@@ -170,11 +184,14 @@ private:
 	float PingAnimationRunningTime = 0.f;
 
 	UPROPERTY(EditAnywhere)
-	float CheckPingFrequency = 20.f;
+	float CheckPingFrequency = 5.f;
 
 	UFUNCTION(Server, Reliable)
 	void ServerReportPingStatus(bool bHighPing);
 
 	UPROPERTY(EditAnywhere)
 	float HighPingThreshold = 50.f;
+
+	void SetHUDPing(uint8 Ping);
+
 };

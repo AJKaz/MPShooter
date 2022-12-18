@@ -30,6 +30,15 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ScoreAmount;
 
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* BlueTeamScore;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* RedTeamScore;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ScoreSpacer;
+
 	/* Deaths */
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* DeathsAmount;
@@ -56,9 +65,12 @@ public:
 	UTextBlock* MatchCountdownText;
 
 
-	/* High Ping Image */
+	/* Stats */
 	UPROPERTY(meta = (BindWidget))
 	class UImage* HighPingImage;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* PingText;
 
 	UPROPERTY(meta = (BindWidgetAnim), Transient)
 	class UWidgetAnimation* HighPingAnimation;

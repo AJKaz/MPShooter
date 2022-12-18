@@ -5,6 +5,11 @@
 #include "MPShooter/GameState/ShooterGameState.h"
 #include "MPShooter/PlayerState/ShooterPlayerState.h"
 #include "Kismet/GameplayStatics.h"
+#include "MPShooter/PlayerController/ShooterPlayerController.h"
+
+ATeamsGameMode::ATeamsGameMode() {
+	bTeamsMatch = true;
+}
 
 void ATeamsGameMode::PostLogin(APlayerController* NewPlayer) {
 	Super::PostLogin(NewPlayer);
@@ -75,8 +80,22 @@ float ATeamsGameMode::CalculateDamage(AController* Attacker, AController* Victim
 	if (AttackerPState == nullptr || VictimPState == nullptr) return BaseDamage;
 	if (VictimPState == AttackerPState) return BaseDamage;
 	if (AttackerPState->GetTeam() == VictimPState->GetTeam()) {
-		// same team, deal 10% damage
-		return BaseDamage * 0.1f;
+		// same team, deal 0 damage
+		return 0.f;
 	}
 	return BaseDamage;
+}
+
+void ATeamsGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, AShooterPlayerController* VictimController, AShooterPlayerController* AttackerController) {
+	Super::PlayerEliminated(ElimmedCharacter, VictimController, AttackerController);
+	AShooterGameState* SGameState = Cast<AShooterGameState>(UGameplayStatics::GetGameState(this));
+	AShooterPlayerState* AttackerPState = AttackerController ? Cast<AShooterPlayerState>(AttackerController->PlayerState) : nullptr;
+	if (SGameState && AttackerPState) {
+		if (AttackerPState->GetTeam() == ETeam::ET_BlueTeam) {
+			SGameState->BlueTeamScores();
+		}
+		if (AttackerPState->GetTeam() == ETeam::ET_RedTeam) {
+			SGameState->RedTeamScores();
+		}
+	}
 }

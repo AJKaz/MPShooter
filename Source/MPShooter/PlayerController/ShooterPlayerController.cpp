@@ -35,7 +35,9 @@ void AShooterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AShooterPlayerController, MatchState);
+	DOREPLIFETIME(AShooterPlayerController, bShowTeamScores);
 }
+
 
 void AShooterPlayerController::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
@@ -62,6 +64,59 @@ void AShooterPlayerController::ShowReturnToMenu() {
 	}
 }
 
+void AShooterPlayerController::OnRep_ShowTeamScores() {
+	if (bShowTeamScores) {
+		InitTeamScores();
+	}
+	else {
+		HideTeamScores();
+	}
+}
+
+void AShooterPlayerController::HideTeamScores() {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->RedTeamScore && ShooterHUD->CharacterOverlay->BlueTeamScore && ShooterHUD->CharacterOverlay->ScoreSpacer) {
+		ShooterHUD->CharacterOverlay->RedTeamScore->SetText(FText());
+		ShooterHUD->CharacterOverlay->BlueTeamScore->SetText(FText());
+		ShooterHUD->CharacterOverlay->ScoreSpacer->SetText(FText());
+	}
+}
+
+void AShooterPlayerController::InitTeamScores() {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->RedTeamScore && ShooterHUD->CharacterOverlay->BlueTeamScore && ShooterHUD->CharacterOverlay->ScoreSpacer) {
+		FString Zero("0");
+		FString Spacer("|");
+		ShooterHUD->CharacterOverlay->RedTeamScore->SetText(FText::FromString(Zero));
+		ShooterHUD->CharacterOverlay->BlueTeamScore->SetText(FText::FromString(Zero));
+		ShooterHUD->CharacterOverlay->ScoreSpacer->SetText(FText::FromString(Spacer));
+	}
+}
+
+void AShooterPlayerController::SetHUDRedTeamScore(int32 RedScore) {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->RedTeamScore) {
+		FString ScoreText = FString::Printf(TEXT("%d"), RedScore);
+		ShooterHUD->CharacterOverlay->RedTeamScore->SetText(FText::FromString(ScoreText));
+	}
+}
+
+void AShooterPlayerController::SetHUDBlueTeamScore(int32 BlueScore) {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->BlueTeamScore) {
+		FString ScoreText = FString::Printf(TEXT("%d"), BlueScore);
+		ShooterHUD->CharacterOverlay->BlueTeamScore->SetText(FText::FromString(ScoreText));
+	}
+}
+
+void AShooterPlayerController::SetHUDPing(uint8 Ping) {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && ShooterHUD->CharacterOverlay && ShooterHUD->CharacterOverlay->PingText) {
+		FString PingText = FString::Printf(TEXT("%d ms"), Ping);
+		ShooterHUD->CharacterOverlay->PingText->SetText(FText::FromString(PingText));
+	}
+}
+
 void AShooterPlayerController::CheckPing(float DeltaTime) {
 	HighPingRunningTime += DeltaTime;
 	if (HighPingRunningTime > CheckPingFrequency) {
@@ -70,6 +125,7 @@ void AShooterPlayerController::CheckPing(float DeltaTime) {
 		if (PlayerState) {
 			//UE_LOG(LogTemp, Warning, TEXT("Ping: %d"), PlayerState->GetPing() * 4);
 			// Ping is compressed and divided by 4
+			SetHUDPing(PlayerState->GetPing() * 4);
 			if (PlayerState->GetPing() * 4 > HighPingThreshold) {
 				HighPingWarning();
 				PingAnimationRunningTime = 0.f;
@@ -433,10 +489,10 @@ void AShooterPlayerController::PollInit() {
 	}
 }
 
-void AShooterPlayerController::OnMatchStateSet(FName State) {
+void AShooterPlayerController::OnMatchStateSet(FName State, bool bTeamsMatch) {
 	MatchState = State;
 	if (MatchState == MatchState::InProgress) {
-		HandleMatchHasStarted();
+		HandleMatchHasStarted(bTeamsMatch);
 	}
 	else if (MatchState == MatchState::Cooldown) {
 		HandleCooldown();
@@ -452,13 +508,21 @@ void AShooterPlayerController::OnRep_MatchState() {
 	}
 }
 
-void AShooterPlayerController::HandleMatchHasStarted() {
+void AShooterPlayerController::HandleMatchHasStarted(bool bTeamsMatch) {
+	if (HasAuthority()) bShowTeamScores = bTeamsMatch;
 	// Adds character overlay to hud
 	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
 	if (ShooterHUD) {
 		if (ShooterHUD->CharacterOverlay == nullptr) ShooterHUD->AddCharacterOverlay();
 		if (ShooterHUD->Announcement) {
 			ShooterHUD->Announcement->SetVisibility(ESlateVisibility::Hidden);
+		}
+		if (!HasAuthority()) return;
+		if (bTeamsMatch) {
+			InitTeamScores();
+		}
+		else {
+			HideTeamScores();
 		}
 	}
 }

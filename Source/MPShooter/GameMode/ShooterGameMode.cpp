@@ -54,7 +54,7 @@ void AShooterGameMode::OnMatchStateSet() {
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It) {
 		AShooterPlayerController* ShooterPlayer = Cast<AShooterPlayerController>(*It);
 		if (ShooterPlayer) {
-			ShooterPlayer->OnMatchStateSet(MatchState);
+			ShooterPlayer->OnMatchStateSet(MatchState, bTeamsMatch);
 		}
 	}
 }
