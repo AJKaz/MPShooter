@@ -180,32 +180,6 @@ void AShooterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	DOREPLIFETIME(AShooterCharacter, bDisableGameplay);
 }
 
-void AShooterCharacter::MulticastGainedTheLead_Implementation() {
-	if (CrownSystem == nullptr) return;
-	if (CrownComponent == nullptr) {
-		// spawn crown component
-		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			CrownSystem,
-			GetCapsuleComponent(),
-			FName(),
-			GetActorLocation() + FVector(0.f, 0.f, 110.f),
-			GetActorRotation(),
-			EAttachLocation::KeepWorldPosition,
-			false);
-	}
-	if (CrownComponent) {
-		// activate crown component
-		CrownComponent->Activate();
-	}
-}
-
-void AShooterCharacter::MulticastLostTheLead_Implementation() {
-	// Destroy crown
-	if (CrownComponent) {
-		CrownComponent->DestroyComponent();
-	}
-}
-
 void AShooterCharacter::BeginPlay() {
 	Super::BeginPlay();
 
@@ -298,6 +272,50 @@ void AShooterCharacter::PostInitializeComponents() {
 		if (Controller) {
 			LagCompensation->Controller = Cast<AShooterPlayerController>(Controller);
 		}
+	}
+}
+
+void AShooterCharacter::MulticastGainedTheLead_Implementation() {
+	if (CrownSystem == nullptr) return;
+	if (CrownComponent == nullptr) {
+		// spawn crown component
+		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			CrownSystem,
+			GetMesh(),
+			FName(),
+			GetActorLocation() + FVector(0.f, 0.f, 110.f),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false);
+	}
+	if (CrownComponent) {
+		// activate crown component
+		CrownComponent->Activate();
+	}
+}
+
+void AShooterCharacter::MulticastLostTheLead_Implementation() {
+	// Destroy crown
+	if (CrownComponent) {
+		CrownComponent->DestroyComponent();
+	}
+}
+
+void AShooterCharacter::SetTeamColor(ETeam Team) {
+	if (GetMesh() == nullptr || OriginalMaterial == nullptr) return;
+	switch (Team) {
+	case ETeam::ET_NoTeam:
+		GetMesh()->SetMaterial(0, OriginalMaterial);
+		DissolveMaterialInstance = BlueDissolveMatInst;
+		break;
+	case ETeam::ET_RedTeam:
+		GetMesh()->SetMaterial(0, RedMaterial);
+		DissolveMaterialInstance = RedDissolveMatInst;
+		break;
+	case ETeam::ET_BlueTeam:
+		GetMesh()->SetMaterial(0, BlueMaterial);
+		DissolveMaterialInstance = BlueDissolveMatInst;
+		break;
 	}
 }
 
@@ -767,6 +785,7 @@ void AShooterCharacter::PollInit() {
 		if (ShooterPlayerState) {
 			ShooterPlayerState->AddToScore(0.f);
 			ShooterPlayerState->AddToDeaths(0);
+			SetTeamColor(ShooterPlayerState->GetTeam());
 			AShooterGameState* ShooterGameState = Cast<AShooterGameState>(UGameplayStatics::GetGameState(this));
 			if (ShooterGameState && ShooterGameState->TopScoringPlayers.Contains(ShooterPlayerState)) {
 				MulticastGainedTheLead();
@@ -861,8 +880,13 @@ void AShooterCharacter::HideCameraIfCharacterClose() {
 	// If camera is squished up against player, hide character and weapon
 	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold) {
 		ShowLocalMesh(false);
+		// hide primary weapon
 		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh()) {
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = true;
+		}
+		// hide secondary weapon
+		if (Combat && Combat->SecondaryWeapon && Combat->SecondaryWeapon->GetWeaponMesh()) {
+			Combat->SecondaryWeapon->GetWeaponMesh()->bOwnerNoSee = true;
 		}
 	}
 	else {
@@ -870,6 +894,9 @@ void AShooterCharacter::HideCameraIfCharacterClose() {
 			ShowLocalMesh(true);
 			if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh()) {
 				Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
+			}
+			if (Combat && Combat->SecondaryWeapon && Combat->SecondaryWeapon->GetWeaponMesh()) {
+				Combat->SecondaryWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 			}
 		}
 

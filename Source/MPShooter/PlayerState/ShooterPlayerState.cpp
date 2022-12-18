@@ -9,7 +9,8 @@
 void AShooterPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AShooterPlayerState, Deaths);	
+	DOREPLIFETIME(AShooterPlayerState, Deaths);
+	DOREPLIFETIME(AShooterPlayerState, Team);
 }
 
 
@@ -68,5 +69,20 @@ void AShooterPlayerState::MulticastDeathMessage_Implementation(const FString& Ki
 		if (Controller) {
 			Controller->DisplayDeathMessage(KillerName);
 		}
+	}
+}
+
+void AShooterPlayerState::OnRep_Team() {
+	AShooterCharacter* SCharacter = Cast<AShooterCharacter>(GetPawn());
+	if (SCharacter) {
+		SCharacter->SetTeamColor(Team);
+	}
+}
+
+void AShooterPlayerState::SetTeam(ETeam TeamToSet) {
+	Team = TeamToSet;
+	AShooterCharacter* SCharacter = Cast<AShooterCharacter>(GetPawn());
+	if (SCharacter) {
+		SCharacter->SetTeamColor(Team);
 	}
 }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "MPShooter/ShooterTypes/Team.h"
 #include "ShooterPlayerState.generated.h"
 
 /**
@@ -40,5 +41,19 @@ private:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastDeathMessage(const FString& KillerName);
+
+	/**
+	* Team Stuff
+	*/
+
+	UPROPERTY(ReplicatedUsing = OnRep_Team)
+	ETeam Team = ETeam::ET_NoTeam;
+
+	UFUNCTION()
+	void OnRep_Team();
+
+public:
+	FORCEINLINE ETeam GetTeam() const { return Team; }
+	void SetTeam(ETeam TeamToSet);
 
 };

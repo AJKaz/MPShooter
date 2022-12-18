@@ -8,6 +8,7 @@
 #include "MPShooter/Interfaces/InteractWithCrosshairsInterface.h"
 #include "Components/TimelineComponent.h"
 #include "MPShooter/ShooterTypes/CombatState.h"
+#include "MPShooter/ShooterTypes/Team.h"
 #include "ShooterCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
@@ -75,6 +76,8 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastLostTheLead();
+
+	void SetTeamColor(ETeam Team);
 
 protected:	
 	virtual void BeginPlay() override;	
@@ -320,13 +323,33 @@ private:
 	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
 
 	/* Material instance set on Blueprint, used with dynamic material instance */
-	UPROPERTY(EditAnywhere, Category = Elim)
+	UPROPERTY(VisibleAnywhere, Category = Elim)
 	UMaterialInstance* DissolveMaterialInstance;
 
 	void StartDissolve();
 
 	UFUNCTION()
 	void UpdateDissolveMaterial(float DissolveValue);
+
+	/**
+	* Team Colors
+	*/
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* OriginalMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* RedMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* RedDissolveMatInst;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* BlueMaterial;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* BlueDissolveMatInst;
+
 
 	/**
 	* Grenade
