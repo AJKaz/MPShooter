@@ -160,3 +160,7 @@ void AShooterGameMode::PlayerLeftGame(class AShooterPlayerState* PlayerLeaving) 
 	}
 }
 
+float AShooterGameMode::CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage) {
+	return BaseDamage;
+}
+

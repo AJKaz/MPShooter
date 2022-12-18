@@ -30,6 +30,8 @@ public:
 
 	void PlayerLeftGame(class AShooterPlayerState* PlayerLeaving);
 
+	virtual float CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage);
+
 	/**
 	* Game times
 	*/

@@ -677,7 +677,7 @@ void AShooterCharacter::MulticastElim_Implementation(bool bPLayerLeftGame) {
 
 void AShooterCharacter::ElimTimerFinished() {
 	// Respawn Character after elim timer is finished
-	AShooterGameMode* ShooterGameMode = GetWorld()->GetAuthGameMode<AShooterGameMode>();
+	ShooterGameMode = ShooterGameMode == nullptr ? GetWorld()->GetAuthGameMode<AShooterGameMode>() : ShooterGameMode;
 	if (ShooterGameMode && !bLeftGame) {
 		ShooterGameMode->RequestRespawn(this, Controller);
 	}
@@ -688,7 +688,7 @@ void AShooterCharacter::ElimTimerFinished() {
 }
 
 void AShooterCharacter::ServerLeaveGame_Implementation() {
-	AShooterGameMode* ShooterGameMode = GetWorld()->GetAuthGameMode<AShooterGameMode>();
+	ShooterGameMode = ShooterGameMode == nullptr ? GetWorld()->GetAuthGameMode<AShooterGameMode>() : ShooterGameMode;
 	ShooterPlayerState = ShooterPlayerState == nullptr ? GetPlayerState<AShooterPlayerState>() : ShooterPlayerState;
 	if (ShooterGameMode && ShooterPlayerState) {
 		ShooterGameMode->PlayerLeftGame(ShooterPlayerState);
@@ -701,7 +701,7 @@ void AShooterCharacter::Destroyed() {
 	if (ElimBotComponent) {
 		ElimBotComponent->DestroyComponent();
 	}
-	AShooterGameMode* ShooterGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
+	ShooterGameMode = ShooterGameMode == nullptr ? GetWorld()->GetAuthGameMode<AShooterGameMode>() : ShooterGameMode;
 	bool bMatchNotInProgress = ShooterGameMode && ShooterGameMode->GetMatchState() != MatchState::InProgress;
 	if (Combat && Combat->EquippedWeapon && bMatchNotInProgress) {
 		Combat->EquippedWeapon->Destroy();
@@ -710,7 +710,9 @@ void AShooterCharacter::Destroyed() {
 }
 
 void AShooterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatorController, AActor* DamageCauser) {
-	if (bElimmed) return;
+	ShooterGameMode = ShooterGameMode == nullptr ? GetWorld()->GetAuthGameMode<AShooterGameMode>() : ShooterGameMode;
+	if (bElimmed || ShooterGameMode == nullptr) return;
+	Damage = ShooterGameMode->CalculateDamage(InstigatorController, Controller, Damage);
 
 	// Calculate how much damage to deal to health and shields
 	float DamageToHealth = Damage;
@@ -735,7 +737,6 @@ void AShooterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 
 	// If health is 0, call game mode's player eliminated (player is dead)
 	if (Health == 0.f) {
-		AShooterGameMode* ShooterGameMode = GetWorld()->GetAuthGameMode<AShooterGameMode>();
 		if (ShooterGameMode) {
 			ShooterPlayerController = ShooterPlayerController == nullptr ? Cast<AShooterPlayerController>(Controller) : ShooterPlayerController;
 			AShooterPlayerController* AttackerController = Cast<AShooterPlayerController>(InstigatorController);
@@ -913,7 +914,7 @@ ECombatState AShooterCharacter::GetCombatState() const {
 }
 
 void AShooterCharacter::SpawnDefaultWeapon() {
-	AShooterGameMode* ShooterGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
+	ShooterGameMode = ShooterGameMode == nullptr ? GetWorld()->GetAuthGameMode<AShooterGameMode>() : ShooterGameMode;
 	UWorld* World = GetWorld();
 	if (ShooterGameMode && World && !bElimmed && DefaultWeaponClass) {
 		// Inside this if statement IF using shootergamemode & on server

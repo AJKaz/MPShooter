@@ -68,3 +68,15 @@ void ATeamsGameMode::Logout(AController* Exiting) {
 	}
 
 }
+
+float ATeamsGameMode::CalculateDamage(AController* Attacker, AController* Victim, float BaseDamage) {
+	AShooterPlayerState* AttackerPState = Attacker->GetPlayerState<AShooterPlayerState>();
+	AShooterPlayerState* VictimPState = Victim->GetPlayerState<AShooterPlayerState>();
+	if (AttackerPState == nullptr || VictimPState == nullptr) return BaseDamage;
+	if (VictimPState == AttackerPState) return BaseDamage;
+	if (AttackerPState->GetTeam() == VictimPState->GetTeam()) {
+		// same team, deal 10% damage
+		return BaseDamage * 0.1f;
+	}
+	return BaseDamage;
+}
