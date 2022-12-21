@@ -259,6 +259,12 @@ private:
 
 	void UpdateHUDGrenades();
 
+	/**
+	* Capture the Flag Stuff
+	*/
+	
+	bool bHoldingFlag = false;
+
 public:	
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 	bool ShouldSwapWeapons();

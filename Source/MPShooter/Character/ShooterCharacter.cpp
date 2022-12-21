@@ -932,3 +932,8 @@ bool AShooterCharacter::IsLocallyReloading() {
 	if (Combat == nullptr) return false;
 	return Combat->bLocallyReloading;
 }
+
+bool AShooterCharacter::IsHoldingFlag() const {
+	if (Combat == nullptr) return false;
+	return Combat->bHoldingFlag;
+}
