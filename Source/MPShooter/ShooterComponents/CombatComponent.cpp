@@ -129,7 +129,9 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UCombatComponent, CombatState);
 	DOREPLIFETIME(UCombatComponent, Grenades);
+	DOREPLIFETIME(UCombatComponent, bHoldingFlag);
 }
+
 
 void UCombatComponent::InterpFOV(float DeltaTime) {
 	if (EquippedWeapon == nullptr) return;
@@ -314,17 +316,29 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip) {
 	if (Character == nullptr || WeaponToEquip == nullptr) return;
 	if (CombatState != ECombatState::ECS_Unoccupied) return;
 
-	if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr) {
-		// Have primary weapon, but not secondary weapon
-		// Equip this weapon as secondary
-		EquipSecondaryWeapon(WeaponToEquip);
+	if (WeaponToEquip->GetWeaponType() == EWeaponType::EWT_Flag) {
+		// equipping a flag
+		Character->Crouch();
+		bHoldingFlag = true;
+		WeaponToEquip->SetWeaponState(EWeaponState::EWS_Equipped);
+		AttachFlagToLeftHand(WeaponToEquip);
+		WeaponToEquip->SetOwner(Character);
+		TheFlag = WeaponToEquip;
 	}
 	else {
-		EquipPrimaryWeapon(WeaponToEquip);
-	}
+		// equipping a weapon
+		if (EquippedWeapon != nullptr && SecondaryWeapon == nullptr) {
+			// Have primary weapon, but not secondary weapon
+			// Equip this weapon as secondary
+			EquipSecondaryWeapon(WeaponToEquip);
+		}
+		else {
+			EquipPrimaryWeapon(WeaponToEquip);
+		}
 
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}	
 }
 
 void UCombatComponent::FinishSwap() {
@@ -457,6 +471,14 @@ void UCombatComponent::AttachActorToBackpack(AActor* ActorToAttach) {
 	const USkeletalMeshSocket* BackpackSocket = Character->GetMesh()->GetSocketByName(FName("BackpackSocket"));
 	if (BackpackSocket) {
 		BackpackSocket->AttachActor(ActorToAttach, Character->GetMesh());
+	}
+}
+
+void UCombatComponent::AttachFlagToLeftHand(AWeapon* Flag) {
+	if (Character == nullptr || Character->GetMesh() == nullptr || Flag == nullptr) return;
+	const USkeletalMeshSocket* FlagSocket = Character->GetMesh()->GetSocketByName(FName("FlagSocket"));
+	if (FlagSocket) {
+		FlagSocket->AttachActor(Flag, Character->GetMesh());
 	}
 }
 
@@ -713,6 +735,12 @@ void UCombatComponent::UpdateHUDGrenades() {
 		Controller->SetHUDGrenades(Grenades);
 	}
 
+}
+
+void UCombatComponent::OnRep_HoldingFlag() {
+	if (bHoldingFlag && Character && Character->IsLocallyControlled()) {
+		Character->Crouch();
+	}
 }
 
 bool UCombatComponent::ShouldSwapWeapons() {

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "WeaponTypes.h"
+#include "MPShooter/ShooterTypes/Team.h"
 #include "Weapon.generated.h"
 
 UENUM(BlueprintType)
@@ -38,7 +39,7 @@ public:
 	virtual void OnRep_Owner() override;
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& HitTarget);
-	void Dropped();
+	virtual void Dropped();
 	void SetHUDAmmo();
 	void AddAmmo(int32 AmmoToAdd);
 
@@ -205,6 +206,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;	
+
+	UPROPERTY(EditAnywhere)
+	ETeam Team;
 
 public:	
 

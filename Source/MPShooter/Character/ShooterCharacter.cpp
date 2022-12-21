@@ -210,6 +210,12 @@ void AShooterCharacter::Tick(float DeltaTime) {
 }
 
 void AShooterCharacter::RotateInPlace(float DeltaTime) {
+	if (Combat && Combat->bHoldingFlag) {
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+		return;
+	}
 	if (bDisableGameplay) {
 		bUseControllerRotationYaw = false;
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
@@ -429,7 +435,7 @@ void AShooterCharacter::LookUp(float Value) {
 
 void AShooterCharacter::InteractButtonPressed() {
 	if (bDisableGameplay) return;
-	if (Combat) {
+	if (Combat && !Combat->bHoldingFlag) {		
 		ServerInteractButtonPressed();
 	}
 }
@@ -442,24 +448,26 @@ void AShooterCharacter::ServerInteractButtonPressed_Implementation() {
 
 void AShooterCharacter::CrouchButtonPressed() {
 	if (bDisableGameplay) return;
+	if (Combat && Combat->bHoldingFlag) return;
 	Crouch();
 }
 
 void AShooterCharacter::CrouchButtonReleased() {
 	if (bDisableGameplay) return;
+	if (Combat && Combat->bHoldingFlag) return;
 	UnCrouch();
 }
 
 void AShooterCharacter::ADSButtonPressed() {
 	if (bDisableGameplay) return;
-	if (Combat) {
+	if (Combat && !Combat->bHoldingFlag) {
 		Combat->SetAiming(true);
 	}
 }
 
 void AShooterCharacter::ADSButtonReleased() {
 	if (bDisableGameplay) return;
-	if (Combat) {
+	if (Combat && !Combat->bHoldingFlag) {
 		Combat->SetAiming(false);
 	}
 }
@@ -471,21 +479,21 @@ void AShooterCharacter::Jump() {
 
 void AShooterCharacter::FireButtonPressed() {
 	if (bDisableGameplay) return;
-	if (Combat) {
+	if (Combat && !Combat->bHoldingFlag) {
 		Combat->FireButtonPressed(true);
 	}
 }
 
 void AShooterCharacter::FireButtonReleased() {
 	if (bDisableGameplay) return;
-	if (Combat) {
+	if (Combat && !Combat->bHoldingFlag) {
 		Combat->FireButtonPressed(false);
 	}
 }
 
 void AShooterCharacter::ReloadButtonPressed() {
 	if (bDisableGameplay) return;
-	if (Combat) {
+	if (Combat && !Combat->bHoldingFlag) {
 		Combat->Reload();
 	}
 }
@@ -499,14 +507,14 @@ void AShooterCharacter::DropButtonPressed() {
 
 void AShooterCharacter::GrenadeButtonPressed() {
 	if (bDisableGameplay) return;
-	if (Combat) {
+	if (Combat && !Combat->bHoldingFlag) {
 		Combat->ThrowGrenade();
 	}
 }
 
 void AShooterCharacter::SwapWeaponButtonPressed() {
 	if (bDisableGameplay) return;
-	if (Combat && Combat->ShouldSwapWeapons() && Combat->CombatState == ECombatState::ECS_Unoccupied) {
+	if (Combat && Combat->ShouldSwapWeapons() && Combat->CombatState == ECombatState::ECS_Unoccupied && !Combat->bHoldingFlag) {
 		ServerSwapWeaponButtonPressed();
 		bFinishedSwapping = false;
 		if (!HasAuthority()) {
@@ -614,6 +622,7 @@ void AShooterCharacter::DropOrDestroyWeapons() {
 	if (Combat) {
 		if (Combat->EquippedWeapon) DropOrDestroyWeapon(Combat->EquippedWeapon);
 		if (Combat->SecondaryWeapon) DropOrDestroyWeapon(Combat->SecondaryWeapon);
+		if (Combat->TheFlag) Combat->TheFlag->Dropped();
 	}
 }
 
@@ -936,4 +945,10 @@ bool AShooterCharacter::IsLocallyReloading() {
 bool AShooterCharacter::IsHoldingFlag() const {
 	if (Combat == nullptr) return false;
 	return Combat->bHoldingFlag;
+}
+
+ETeam AShooterCharacter::GetTeam() {
+	ShooterPlayerState = ShooterPlayerState == nullptr ? GetPlayerState<AShooterPlayerState>() : ShooterPlayerState;
+	if (ShooterPlayerState == nullptr) return ETeam::ET_NoTeam;
+	return ShooterPlayerState->GetTeam();	
 }
