@@ -110,6 +110,9 @@ protected:
 	UFUNCTION()
 	void OnRep_ShowTeamScores();
 
+	FString GetInfoText(const TArray<class AShooterPlayerState*>& Players);
+	FString GetTeamsInfoText(class AShooterGameState* ShooterGameState);
+
 private:
 
 	/**
