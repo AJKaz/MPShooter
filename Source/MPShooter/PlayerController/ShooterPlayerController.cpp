@@ -214,6 +214,17 @@ void AShooterPlayerController::ClientElimAnnouncement_Implementation(APlayerStat
 	}
 }
 
+void AShooterPlayerController::BroadcastElim(APlayerState* Victim) {
+	ClientBarrierElimAnnouncement(Victim);
+}
+
+void AShooterPlayerController::ClientBarrierElimAnnouncement_Implementation(APlayerState* Victim) {
+	ShooterHUD = ShooterHUD == nullptr ? Cast<AShooterHUD>(GetHUD()) : ShooterHUD;
+	if (ShooterHUD && Victim) {
+		ShooterHUD->AddElimAnnouncement("Death Barrier", Victim->GetPlayerName());
+	}
+}
+
 void AShooterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float StartingTime, float Cooldown) {
 	// Set MatchState and Game Times
 	MatchState = StateOfMatch;

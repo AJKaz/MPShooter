@@ -129,7 +129,13 @@ void AShooterGameMode::PlayerEliminated(AShooterCharacter* ElimmedCharacter, ASh
 	if (ElimmedCharacter) {
 		ElimmedCharacter->Elim(false);
 	}
-
+	// broadcast elim message
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It) {
+		AShooterPlayerController* ShooterPlayer = Cast<AShooterPlayerController>(*It);
+		if (ShooterPlayer && VictimPlayerState) {
+			ShooterPlayer->BroadcastElim(VictimPlayerState);
+		}
+	}
 }
 
 void AShooterGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController) {

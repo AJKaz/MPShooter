@@ -50,6 +50,7 @@ public:
 
 	// called on elim
 	void BroadcastElim(APlayerState* Attacker, APlayerState* Victim);
+	void BroadcastElim(APlayerState* Victim);
 
 	/**
 	* Scores
@@ -103,6 +104,9 @@ protected:
 	
 	UFUNCTION(Client, Reliable)
 	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
+
+	UFUNCTION(Client, Reliable)
+	void ClientBarrierElimAnnouncement(APlayerState* Victim);
 
 	UPROPERTY(ReplicatedUsing = OnRep_ShowTeamScores)
 	bool bShowTeamScores = false;

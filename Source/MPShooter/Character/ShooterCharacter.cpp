@@ -27,7 +27,7 @@
 #include "NiagaraComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "MPShooter/GameState/ShooterGameState.h"
-
+#include "MPShooter/PlayerStart/TeamPlayerStart.h"
 
 AShooterCharacter::AShooterCharacter() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -789,17 +789,42 @@ void AShooterCharacter::UpdateHUDAmmo() {
 }
 
 void AShooterCharacter::PollInit() {
-	// Poll any relevant classesand initialize HUD
+	// Poll any relevant classes and initialize HUD
 	if (ShooterPlayerState == nullptr) {
 		ShooterPlayerState = GetPlayerState<AShooterPlayerState>();
 		if (ShooterPlayerState) {
-			ShooterPlayerState->AddToScore(0.f);
-			ShooterPlayerState->AddToDeaths(0);
-			SetTeamColor(ShooterPlayerState->GetTeam());
+			OnPlayerStateInitialzed();
 			AShooterGameState* ShooterGameState = Cast<AShooterGameState>(UGameplayStatics::GetGameState(this));
 			if (ShooterGameState && ShooterGameState->TopScoringPlayers.Contains(ShooterPlayerState)) {
 				MulticastGainedTheLead();
 			}
+		}
+	}
+}
+
+void AShooterCharacter::OnPlayerStateInitialzed() {
+	ShooterPlayerState->AddToScore(0.f);
+	ShooterPlayerState->AddToDeaths(0);
+	SetTeamColor(ShooterPlayerState->GetTeam());
+	SetSpawnPoint();
+}
+
+void AShooterCharacter::SetSpawnPoint() {
+	if (HasAuthority() && ShooterPlayerState && ShooterPlayerState->GetTeam() != ETeam::ET_NoTeam) {
+		TArray<AActor*> PlayerStarts;
+		UGameplayStatics::GetAllActorsOfClass(this, ATeamPlayerStart::StaticClass(), PlayerStarts);
+		TArray<ATeamPlayerStart*> TeamPlayerStarts;
+		// find all player starts on player's team
+		for (auto Start : PlayerStarts) {
+			ATeamPlayerStart* TeamStart = Cast<ATeamPlayerStart>(Start);
+			if (TeamStart && TeamStart->Team == ShooterPlayerState->GetTeam()) {
+				TeamPlayerStarts.Add(TeamStart);
+			}
+		}
+		// choose a random start
+		if (TeamPlayerStarts.Num() > 0) {
+			ATeamPlayerStart* ChosenPlayerStart = TeamPlayerStarts[FMath::RandRange(0, TeamPlayerStarts.Num() - 1)];
+			SetActorLocationAndRotation(ChosenPlayerStart->GetActorLocation(), ChosenPlayerStart->GetActorRotation());
 		}
 	}
 }

@@ -114,6 +114,8 @@ protected:
 	void RotateInPlace(float DeltaTime);
 	void DropOrDestroyWeapon(AWeapon* Weapon);
 	void DropOrDestroyWeapons();
+	void OnPlayerStateInitialzed();
+	void SetSpawnPoint();
 
 	/**
 	* Hit boxes used for server-side rewind
