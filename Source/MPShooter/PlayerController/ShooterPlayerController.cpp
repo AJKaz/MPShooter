@@ -436,10 +436,16 @@ void AShooterPlayerController::SetHUDTime() {
 	if (MatchState == MatchState::WaitingToStart) TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
 	else if (MatchState == MatchState::InProgress) TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
 	else if (MatchState == MatchState::Cooldown) TimeLeft = CooldownTime + WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
-
 	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
 
 	if (HasAuthority()) {
+
+		if (ShooterGameMode == nullptr) {
+			ShooterGameMode = Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this));
+			if (ShooterGameMode) {
+				LevelStartingTime = ShooterGameMode->LevelStartingTime;
+			}
+		}
 		ShooterGameMode = ShooterGameMode == nullptr ? Cast<AShooterGameMode>(UGameplayStatics::GetGameMode(this)) : ShooterGameMode;
 		if (ShooterGameMode) {
 			SecondsLeft = FMath::CeilToInt(ShooterGameMode->GetCountdownTime() + LevelStartingTime);

@@ -75,7 +75,7 @@ AShooterCharacter::AShooterCharacter() {
 
 	// Jumping Variables:	
 	GetCharacterMovement()->AirControl = 0.88f;		// set to 1.0 for full in air control
-	GetCharacterMovement()->JumpZVelocity = 1600.f;
+	GetCharacterMovement()->JumpZVelocity = 1350.f;
 	GetCharacterMovement()->GravityScale = 3.3f;
 	GetCharacterMovement()->RotationRate.Yaw = 850.f;
 
