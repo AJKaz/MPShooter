@@ -2,7 +2,11 @@
     MPShooter ToDo List
 ==============================
     
-    
+    - [ ] SENS
+
+    - [ ] Cone melee damage?
+    - [ ] Make RPG comically large
+
     - [ ] Move AddToDeaths() inside of the MulticastRPC for DeathMessage
     - [x] Slightly decrease jump velocity
     - [x] Hide local mesh for player when ADS with sniper
@@ -32,6 +36,12 @@
     MPShooter Bug List
 ==============================
 
+    - [ ] Rocket launcher can be tanked, doesn't collat
+    - [ ] Timer/results don't always show up for clients after game
+    - [ ] Client restarting game doesn't always work
+    - [ ] Main menu button takes forever
+    - [ ] If scoped w/ sniper and die, sniper scope stays on screen (and once game's over)
+    - [ ] If gun has 0 ammo and player dies, next player to pick it up can't reload it
     - [x] Killed By Text only displays on server (not replicating for some reason?)
         -> Fix: Used MulticastRPC instead of Rep Notify for killer's name (Rep notify only gets called if variable is set to different value)
     - [x] When holding a weapon and looking right (hip fire), left hand comes off of the left hand socket
