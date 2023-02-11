@@ -216,6 +216,10 @@ void AShooterCharacter::RotateInPlace(float DeltaTime) {
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 		return;
 	}
+	else if (Combat && Combat->EquippedWeapon) {
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		bUseControllerRotationYaw = true;
+	}
 	if (bDisableGameplay) {
 		bUseControllerRotationYaw = false;
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
@@ -976,4 +980,9 @@ ETeam AShooterCharacter::GetTeam() {
 	ShooterPlayerState = ShooterPlayerState == nullptr ? GetPlayerState<AShooterPlayerState>() : ShooterPlayerState;
 	if (ShooterPlayerState == nullptr) return ETeam::ET_NoTeam;
 	return ShooterPlayerState->GetTeam();	
+}
+
+void AShooterCharacter::SetHoldingTheFlag(bool bHolding) {
+	if (Combat == nullptr) return;
+	Combat->bHoldingFlag = bHolding;
 }
