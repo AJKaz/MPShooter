@@ -430,11 +430,11 @@ void AShooterCharacter::MoveRight(float Value) {
 }
 
 void AShooterCharacter::Turn(float Value) {
-	AddControllerYawInput(Value);
+	AddControllerYawInput(Value * MouseSens);
 }
 
 void AShooterCharacter::LookUp(float Value) {
-	AddControllerPitchInput(Value);
+	AddControllerPitchInput(Value * MouseSens);
 }
 
 void AShooterCharacter::InteractButtonPressed() {
@@ -478,6 +478,7 @@ void AShooterCharacter::ADSButtonReleased() {
 
 void AShooterCharacter::Jump() {
 	if (bDisableGameplay) return;
+	//UnCrouch();
 	Super::Jump();
 }
 

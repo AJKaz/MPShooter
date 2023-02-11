@@ -24,7 +24,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PostInitializeComponents() override;
-	virtual void OnRep_ReplicatedMovement() override;
+	virtual void OnRep_ReplicatedMovement() override;	
 
 	/**
 	* Play Animation Montages
@@ -167,6 +167,10 @@ protected:
 	UBoxComponent* foot_r;
 
 private:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	float MouseSens = 0.45f;
+
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	class USpringArmComponent* CameraBoom;
 
@@ -250,7 +254,7 @@ private:
 
 	/**
 	* Health & Shields
-	*/
+	*/	
 
 	UPROPERTY(EditAnywhere, Category = "Player Stats")
 	float MaxHealth = 100.f;
