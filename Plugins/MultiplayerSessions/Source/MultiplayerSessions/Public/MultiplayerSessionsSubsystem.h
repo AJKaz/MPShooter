@@ -41,7 +41,8 @@ public:
 	FMultiplayerOnDestroySessionComplete MultiplayerOnDestroySessionComplete;
 	FMultiplayerOnStartSessionComplete MultiplayerOnStartSessionComplete;
 
-
+	int32 DesiredNumPublicConnections{};
+	FString DesiredMatchType{};
 
 protected:
 
@@ -82,6 +83,6 @@ private:
 	FDelegateHandle DestroySessionCompleteDelegateHandle;
 
 	FOnStartSessionCompleteDelegate StartSessionCompleteDelegate;
-	FDelegateHandle StartSessionCompleteDelegateHandle;
+	FDelegateHandle StartSessionCompleteDelegateHandle;	
 
 };
