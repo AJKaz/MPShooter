@@ -103,7 +103,7 @@ void AWeapon::SpendRound() {
 	if (HasAuthority()) {
 		ClientUpdateAmmo(Ammo);
 	}
-	else if (BlasterOwnerCharacter && BlasterOwnerCharacter->IsLocallyControlled()) {
+	else if (ShooterOwnerCharacter && ShooterOwnerCharacter->IsLocallyControlled()) {
 		++Sequence;
 	}
 }
